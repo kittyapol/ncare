@@ -173,6 +173,50 @@ export default function Reports() {
     URL.revokeObjectURL(url);
   };
 
+  const handleExportPDF = async () => {
+    try {
+      const response = await api.get(`/reports/${activeTab}/export-pdf`, {
+        params: { start_date: startDate, end_date: endDate },
+        responseType: 'blob',
+      });
+
+      // Create download link
+      const blob = new Blob([response.data], { type: 'application/pdf' });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${activeTab}_${startDate}_${endDate}.pdf`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('PDF export failed:', error);
+      alert('ไม่สามารถ export PDF ได้ กรุณาลองอีกครั้ง');
+    }
+  };
+
+  const handleExportExcel = async () => {
+    try {
+      const response = await api.get(`/reports/${activeTab}/export-excel`, {
+        params: { start_date: startDate, end_date: endDate },
+        responseType: 'blob',
+      });
+
+      // Create download link
+      const blob = new Blob([response.data], {
+        type: 'application/vnd.openxmlformats-officedocument.spreadsheetml.sheet'
+      });
+      const url = URL.createObjectURL(blob);
+      const link = document.createElement('a');
+      link.href = url;
+      link.download = `${activeTab}_${startDate}_${endDate}.xlsx`;
+      link.click();
+      URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Excel export failed:', error);
+      alert('ไม่สามารถ export Excel ได้ กรุณาลองอีกครั้ง');
+    }
+  };
+
   const tabs: { id: ReportTab; label: string; icon: string }[] = [
     { id: 'profit-loss', label: 'กำไร-ขาดทุน', icon: '📊' },
     { id: 'vat-sales', label: 'ภาษีขาย', icon: '💰' },
@@ -224,6 +268,20 @@ export default function Reports() {
             className="btn btn-secondary"
           >
             🖨️ พิมพ์
+          </button>
+          <button
+            onClick={handleExportPDF}
+            className="btn btn-secondary"
+            disabled={!reportData}
+          >
+            📄 Export PDF
+          </button>
+          <button
+            onClick={handleExportExcel}
+            className="btn btn-secondary"
+            disabled={!reportData}
+          >
+            📊 Export Excel
           </button>
           <button
             onClick={handleExportCSV}
