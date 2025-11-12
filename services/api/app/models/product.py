@@ -74,6 +74,11 @@ class Product(Base):
     cost_price = Column(Numeric(10, 2), nullable=False, default=0)
     selling_price = Column(Numeric(10, 2), nullable=False, default=0)
 
+    # VAT (Value Added Tax) - Thailand Tax Compliance
+    is_vat_applicable = Column(Boolean, default=True)
+    vat_rate = Column(Numeric(5, 2), default=7.00)  # Thailand standard VAT rate is 7%
+    vat_category = Column(String(50), default='standard')  # standard, exempt, zero-rated
+
     # Stock management
     unit_of_measure = Column(String(50), default="unit")
     minimum_stock = Column(Integer, default=0)

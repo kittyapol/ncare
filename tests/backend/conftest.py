@@ -44,12 +44,10 @@ class SQLiteCompatibleUUID(TypeDecorator):
     def process_result_value(self, value, dialect):
         if value is None:
             return value
+        # Always return string for consistent behavior with Pydantic schemas
         if isinstance(value, uuid.UUID):
-            return value
-        try:
-            return uuid.UUID(value)
-        except (TypeError, ValueError, AttributeError):
-            return value
+            return str(value)
+        return str(value) if value else None
 
 class SQLiteCompatibleJSONB(TypeDecorator):
     """Platform-independent JSONB type that works with both PostgreSQL and SQLite."""
@@ -82,7 +80,29 @@ class SQLiteCompatibleJSONB(TypeDecorator):
 pg.UUID = SQLiteCompatibleUUID
 pg.JSONB = SQLiteCompatibleJSONB
 
-# Now import app modules AFTER patching
+# Create test database engine BEFORE importing app
+# This ensures app uses the test database
+import os
+
+# Use in-memory SQLite with shared cache for test database
+SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:?cache=shared"
+
+# Create a single connection that will be reused
+test_engine = create_engine(
+    SQLALCHEMY_DATABASE_URL,
+    connect_args={"check_same_thread": False},
+    poolclass=StaticPool,  # Use StaticPool to maintain single connection
+)
+
+# Override database settings before importing app
+os.environ["DATABASE_URL"] = SQLALCHEMY_DATABASE_URL
+
+# Import database module and override its engine
+from app.core import database
+database.engine = test_engine
+database.SessionLocal = sessionmaker(autocommit=False, autoflush=False, bind=test_engine)
+
+# Now import app modules AFTER patching and overriding database
 from fastapi.testclient import TestClient
 from app.main import app
 from app.core.database import Base, get_db
@@ -97,20 +117,16 @@ from app.models.purchase import PurchaseOrder, PurchaseOrderItem
 from app.models.manufacturing import ManufacturingOrder, BillOfMaterials
 from app.models.audit import AuditLog
 
-# Test database URL (in-memory SQLite for testing)
-SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
 
 @pytest.fixture(scope="function")
 def db_engine():
-    """Create test database engine"""
-    engine = create_engine(
-        SQLALCHEMY_DATABASE_URL,
-        connect_args={"check_same_thread": False},
-        poolclass=StaticPool,
-    )
-    Base.metadata.create_all(bind=engine)
-    yield engine
-    Base.metadata.drop_all(bind=engine)
+    """Create test database engine and tables"""
+    # Create all tables
+    Base.metadata.create_all(bind=test_engine)
+    yield test_engine
+    # Clean up: Close all sessions and drop all tables
+    # This ensures each test starts with a clean slate
+    Base.metadata.drop_all(bind=test_engine)
 
 
 @pytest.fixture(scope="function")

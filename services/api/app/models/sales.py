@@ -93,6 +93,11 @@ class SalesOrderItem(Base):
     discount_amount = Column(Numeric(10, 2), default=0)
     line_total = Column(Numeric(10, 2), nullable=False)
 
+    # VAT Breakdown for Tax Reporting
+    vat_amount = Column(Numeric(10, 2), default=0)
+    price_before_vat = Column(Numeric(10, 2), default=0)
+    price_including_vat = Column(Numeric(10, 2), default=0)
+
     # Timestamps
     created_at = Column(DateTime(timezone=True), server_default=func.now())
 
