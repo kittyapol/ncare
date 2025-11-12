@@ -3,8 +3,10 @@ export interface User {
   email: string;
   full_name: string;
   role: 'admin' | 'manager' | 'pharmacist' | 'staff' | 'cashier';
+  phone?: string;
   is_active: boolean;
   created_at: string;
+  updated_at?: string;
 }
 
 export interface Customer {
