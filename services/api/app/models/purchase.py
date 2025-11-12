@@ -1,5 +1,5 @@
 import uuid
-from sqlalchemy import Column, String, DateTime, ForeignKey, Integer, Numeric, Date, Enum, Text
+from sqlalchemy import Column, String, DateTime, ForeignKey, Integer, Numeric, Date, Enum, Text, Boolean
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
@@ -79,6 +79,13 @@ class PurchaseOrderItem(Base):
     unit_price = Column(Numeric(10, 2), nullable=False)
     discount_amount = Column(Numeric(10, 2), default=0)
     line_total = Column(Numeric(12, 2), nullable=False)
+
+    # VAT Breakdown (สำหรับบัญชีและภาษีซื้อ)
+    is_vat_included = Column(Boolean, default=True)  # ราคารวม VAT หรือไม่
+    vat_rate = Column(Numeric(5, 2), default=7.00)  # อัตรา VAT %
+    vat_amount = Column(Numeric(10, 2), default=0)  # จำนวน VAT
+    price_before_vat = Column(Numeric(10, 2), default=0)  # ราคาก่อน VAT
+    price_including_vat = Column(Numeric(10, 2), default=0)  # ราคารวม VAT
 
     # Notes
     notes = Column(String(500))

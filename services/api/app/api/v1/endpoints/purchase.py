@@ -112,21 +112,7 @@ def receive_purchase_order(
 
     # Create inventory lots for received items
     for item_data in receiving_data.items:
-        lot = InventoryLot(
-            product_id=item_data.product_id,
-            warehouse_id=receiving_data.warehouse_id,
-            supplier_id=order.supplier_id,
-            lot_number=item_data.lot_number,
-            quantity_received=item_data.quantity,
-            quantity_available=item_data.quantity,
-            manufacture_date=item_data.manufacture_date,
-            expiry_date=item_data.expiry_date,
-            received_date=date.today(),
-            quality_status=QualityStatus.PENDING,
-        )
-        db.add(lot)
-
-        # Update PO item received quantity
+        # Get PO item first to calculate unit cost
         po_item = (
             db.query(PurchaseOrderItem)
             .filter(
@@ -135,8 +121,38 @@ def receive_purchase_order(
             )
             .first()
         )
-        if po_item:
-            po_item.quantity_received += item_data.quantity
+
+        if not po_item:
+            raise HTTPException(
+                status_code=400,
+                detail=f"Product {item_data.product_id} not found in purchase order"
+            )
+
+        # Calculate unit cost (ต้นทุนจริงก่อน VAT)
+        # ถ้าราคารวม VAT แล้ว ต้องหารออกเพื่อได้ต้นทุนจริง
+        unit_cost = po_item.unit_price
+        if hasattr(po_item, 'is_vat_included') and po_item.is_vat_included:
+            # ถ้ารวม VAT แล้ว หารออกเพื่อได้ราคาก่อน VAT
+            vat_rate = po_item.vat_rate if hasattr(po_item, 'vat_rate') else 7.00
+            unit_cost = po_item.unit_price / (1 + float(vat_rate) / 100)
+
+        lot = InventoryLot(
+            product_id=item_data.product_id,
+            warehouse_id=receiving_data.warehouse_id,
+            supplier_id=order.supplier_id,
+            lot_number=item_data.lot_number,
+            quantity_received=item_data.quantity,
+            quantity_available=item_data.quantity,
+            unit_cost=unit_cost,  # ✅ เพิ่ม unit_cost
+            manufacture_date=item_data.manufacture_date,
+            expiry_date=item_data.expiry_date,
+            received_date=date.today(),
+            quality_status=QualityStatus.PENDING,
+        )
+        db.add(lot)
+
+        # Update PO item received quantity
+        po_item.quantity_received += item_data.quantity
 
     # Update order status
     order.status = PurchaseOrderStatus.RECEIVED

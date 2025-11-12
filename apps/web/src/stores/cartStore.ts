@@ -10,6 +10,9 @@ interface CartItem {
     name_en?: string;
     selling_price: number;
     barcode?: string;
+    // VAT fields
+    is_vat_applicable: boolean;
+    vat_rate: number;
   };
   quantity: number;
   unit_price: number;
@@ -95,8 +98,14 @@ export const useCartStore = create<CartState>()(
       },
 
       getTax: () => {
-        const subtotal = get().getSubtotal();
-        return subtotal * 0.07; // 7% VAT
+        // ✅ เช็ค VAT จาก product แทนที่จะใช้ flat 7%
+        return get().items.reduce((sum, item) => {
+          if (item.product.is_vat_applicable) {
+            const vat_rate = item.product.vat_rate || 7.0;
+            return sum + (item.line_total * (vat_rate / 100));
+          }
+          return sum; // สินค้าไม่มี VAT ไม่บวก
+        }, 0);
       },
 
       getTotal: () => {

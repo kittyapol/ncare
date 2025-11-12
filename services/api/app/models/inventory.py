@@ -68,6 +68,9 @@ class InventoryLot(Base):
     quantity_reserved = Column(Integer, default=0)
     quantity_damaged = Column(Integer, default=0)
 
+    # Cost tracking (สำคัญ: ต้นทุนจริงต่อหน่วยเมื่อรับของ)
+    unit_cost = Column(Numeric(10, 2), nullable=False, default=0.00)
+
     # Dates
     manufacture_date = Column(Date)
     expiry_date = Column(Date, nullable=False, index=True)
