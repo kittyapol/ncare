@@ -25,8 +25,7 @@ def get_db() -> Generator:
 
 
 async def get_current_user(
-    db: Session = Depends(get_db),
-    token: str = Depends(oauth2_scheme)
+    db: Session = Depends(get_db), token: str = Depends(oauth2_scheme)
 ) -> User:
     """Get current authenticated user"""
     credentials_exception = HTTPException(
@@ -48,10 +47,7 @@ async def get_current_user(
         raise credentials_exception
 
     if not user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
 
     return user
 
@@ -61,22 +57,20 @@ def get_current_active_user(
 ) -> User:
     """Get current active user"""
     if not current_user.is_active:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail="Inactive user"
-        )
+        raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail="Inactive user")
     return current_user
 
 
 def require_role(*required_roles: UserRole):
     """Dependency to check if user has required role"""
+
     def role_checker(current_user: User = Depends(get_current_active_user)) -> User:
         if current_user.role not in required_roles:
             raise HTTPException(
-                status_code=status.HTTP_403_FORBIDDEN,
-                detail="Not enough permissions"
+                status_code=status.HTTP_403_FORBIDDEN, detail="Not enough permissions"
             )
         return current_user
+
     return role_checker
 
 
@@ -84,10 +78,7 @@ def require_role(*required_roles: UserRole):
 def get_admin_user(current_user: User = Depends(get_current_active_user)) -> User:
     """Require admin role"""
     if current_user.role != UserRole.ADMIN:
-        raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Admin access required"
-        )
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Admin access required")
     return current_user
 
 
@@ -95,8 +86,7 @@ def get_manager_or_admin(current_user: User = Depends(get_current_active_user)) 
     """Require manager or admin role"""
     if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER]:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Manager or admin access required"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Manager or admin access required"
         )
     return current_user
 
@@ -105,7 +95,6 @@ def get_pharmacist_or_above(current_user: User = Depends(get_current_active_user
     """Require pharmacist, manager, or admin role"""
     if current_user.role not in [UserRole.ADMIN, UserRole.MANAGER, UserRole.PHARMACIST]:
         raise HTTPException(
-            status_code=status.HTTP_403_FORBIDDEN,
-            detail="Pharmacist access or above required"
+            status_code=status.HTTP_403_FORBIDDEN, detail="Pharmacist access or above required"
         )
     return current_user

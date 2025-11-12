@@ -77,7 +77,7 @@ class Product(Base):
     # VAT (Value Added Tax) - Thailand Tax Compliance
     is_vat_applicable = Column(Boolean, default=True)
     vat_rate = Column(Numeric(5, 2), default=7.00)  # Thailand standard VAT rate is 7%
-    vat_category = Column(String(50), default='standard')  # standard, exempt, zero-rated
+    vat_category = Column(String(50), default="standard")  # standard, exempt, zero-rated
 
     # Stock management
     unit_of_measure = Column(String(50), default="unit")

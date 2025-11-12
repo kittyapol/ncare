@@ -54,7 +54,9 @@ class PurchaseOrder(Base):
 
     # Relationships
     supplier = relationship("Supplier", back_populates="purchase_orders")
-    items = relationship("PurchaseOrderItem", back_populates="purchase_order", cascade="all, delete-orphan")
+    items = relationship(
+        "PurchaseOrderItem", back_populates="purchase_order", cascade="all, delete-orphan"
+    )
     creator = relationship("User", foreign_keys=[created_by])
     approver = relationship("User", foreign_keys=[approved_by])
 

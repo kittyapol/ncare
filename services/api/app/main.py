@@ -58,11 +58,7 @@ async def readiness_check():
     from app.core.database import SessionLocal
     from sqlalchemy import text
 
-    health_status = {
-        "status": "ready",
-        "service": "api",
-        "checks": {}
-    }
+    health_status = {"status": "ready", "service": "api", "checks": {}}
 
     # Check database connection
     try:
@@ -73,10 +69,7 @@ async def readiness_check():
     except Exception as e:
         health_status["status"] = "not_ready"
         health_status["checks"]["database"] = f"error: {str(e)}"
-        return JSONResponse(
-            status_code=503,
-            content=health_status
-        )
+        return JSONResponse(status_code=503, content=health_status)
 
     return health_status
 

@@ -29,29 +29,29 @@ def seed_users(db):
             "password": "admin123",
             "full_name": "Admin User",
             "role": UserRole.ADMIN,
-            "phone": "02-123-4567"
+            "phone": "02-123-4567",
         },
         {
             "email": "manager@pharmacy.com",
             "password": "manager123",
             "full_name": "Manager User",
             "role": UserRole.MANAGER,
-            "phone": "02-123-4568"
+            "phone": "02-123-4568",
         },
         {
             "email": "pharmacist@pharmacy.com",
             "password": "pharmacist123",
             "full_name": "Pharmacist User",
             "role": UserRole.PHARMACIST,
-            "phone": "02-123-4569"
+            "phone": "02-123-4569",
         },
         {
             "email": "cashier@pharmacy.com",
             "password": "cashier123",
             "full_name": "Cashier User",
             "role": UserRole.CASHIER,
-            "phone": "02-123-4570"
-        }
+            "phone": "02-123-4570",
+        },
     ]
 
     created_users = {}
@@ -64,7 +64,7 @@ def seed_users(db):
                 full_name=user_data["full_name"],
                 role=user_data["role"],
                 phone=user_data.get("phone"),
-                is_active=True
+                is_active=True,
             )
             db.add(user)
             created_users[user_data["role"]] = user
@@ -87,8 +87,16 @@ def seed_categories(db):
         {"code": "CAT003", "name_th": "ยาปฏิชีวนะ", "name_en": "Antibiotics"},
         {"code": "CAT004", "name_th": "วิตามินและอาหารเสริม", "name_en": "Vitamins & Supplements"},
         {"code": "CAT005", "name_th": "ยาทาภายนอก", "name_en": "Topical Medications"},
-        {"code": "CAT006", "name_th": "ยารักษาโรคเรื้อรัง", "name_en": "Chronic Disease Medications"},
-        {"code": "CAT007", "name_th": "ยาบรรเทาอาการทางเดินหายใจ", "name_en": "Respiratory Medications"},
+        {
+            "code": "CAT006",
+            "name_th": "ยารักษาโรคเรื้อรัง",
+            "name_en": "Chronic Disease Medications",
+        },
+        {
+            "code": "CAT007",
+            "name_th": "ยาบรรเทาอาการทางเดินหายใจ",
+            "name_en": "Respiratory Medications",
+        },
         {"code": "CAT008", "name_th": "ยาสมุนไพร", "name_en": "Herbal Medicine"},
     ]
 
@@ -113,8 +121,18 @@ def seed_warehouses(db):
     print("\nCreating warehouses...")
 
     warehouses_data = [
-        {"code": "WH001", "name": "คลังสินค้าหลัก", "type": WarehouseType.MAIN, "address": "123 ถนนพระราม 4"},
-        {"code": "WH002", "name": "คลังเย็น", "type": WarehouseType.COLD_STORAGE, "address": "123 ถนนพระราม 4 (ห้องเย็น)"},
+        {
+            "code": "WH001",
+            "name": "คลังสินค้าหลัก",
+            "type": WarehouseType.MAIN,
+            "address": "123 ถนนพระราม 4",
+        },
+        {
+            "code": "WH002",
+            "name": "คลังเย็น",
+            "type": WarehouseType.COLD_STORAGE,
+            "address": "123 ถนนพระราม 4 (ห้องเย็น)",
+        },
     ]
 
     created_warehouses = {}
@@ -151,7 +169,7 @@ def seed_suppliers(db):
             "province": "กรุงเทพมหานคร",
             "postal_code": "10400",
             "payment_terms": "Net 30",
-            "rating": "A"
+            "rating": "A",
         },
         {
             "code": "SUP002",
@@ -166,8 +184,8 @@ def seed_suppliers(db):
             "province": "กรุงเทพมหานคร",
             "postal_code": "10110",
             "payment_terms": "Net 45",
-            "rating": "A"
-        }
+            "rating": "A",
+        },
     ]
 
     created_suppliers = {}
@@ -201,7 +219,7 @@ def seed_customers(db):
             "province": "กรุงเทพมหานคร",
             "loyalty_points": 100,
             "member_since": date.today(),
-            "membership_tier": "Silver"
+            "membership_tier": "Silver",
         },
         {
             "code": "CUS002",
@@ -213,8 +231,8 @@ def seed_customers(db):
             "province": "กรุงเทพมหานคร",
             "loyalty_points": 250,
             "member_since": date.today() - timedelta(days=90),
-            "membership_tier": "Gold"
-        }
+            "membership_tier": "Gold",
+        },
     ]
 
     created_customers = {}
@@ -255,7 +273,7 @@ def seed_products(db, categories):
             "selling_price": Decimal("5.00"),
             "minimum_stock": 100,
             "reorder_point": 200,
-            "is_prescription_required": False
+            "is_prescription_required": False,
         },
         {
             "sku": "MED002",
@@ -274,7 +292,7 @@ def seed_products(db, categories):
             "selling_price": Decimal("15.00"),
             "minimum_stock": 50,
             "reorder_point": 100,
-            "is_prescription_required": True
+            "is_prescription_required": True,
         },
         {
             "sku": "MED003",
@@ -293,7 +311,7 @@ def seed_products(db, categories):
             "selling_price": Decimal("6.00"),
             "minimum_stock": 50,
             "reorder_point": 100,
-            "is_prescription_required": False
+            "is_prescription_required": False,
         },
         {
             "sku": "SUP001",
@@ -312,7 +330,7 @@ def seed_products(db, categories):
             "selling_price": Decimal("10.00"),
             "minimum_stock": 100,
             "reorder_point": 150,
-            "is_prescription_required": False
+            "is_prescription_required": False,
         },
         {
             "sku": "MED004",
@@ -332,8 +350,8 @@ def seed_products(db, categories):
             "unit_of_measure": "bottle",
             "minimum_stock": 30,
             "reorder_point": 50,
-            "is_prescription_required": False
-        }
+            "is_prescription_required": False,
+        },
     ]
 
     created_products = {}
@@ -367,7 +385,7 @@ def seed_inventory_lots(db, products, warehouses, suppliers):
             "quantity_available": 480,
             "manufacture_date": date.today() - timedelta(days=60),
             "expiry_date": date.today() + timedelta(days=730),  # 2 years
-            "quality_status": QualityStatus.PASSED
+            "quality_status": QualityStatus.PASSED,
         },
         {
             "product_sku": "MED002",
@@ -376,7 +394,7 @@ def seed_inventory_lots(db, products, warehouses, suppliers):
             "quantity_available": 195,
             "manufacture_date": date.today() - timedelta(days=30),
             "expiry_date": date.today() + timedelta(days=365),  # 1 year
-            "quality_status": QualityStatus.PASSED
+            "quality_status": QualityStatus.PASSED,
         },
         {
             "product_sku": "MED003",
@@ -385,7 +403,7 @@ def seed_inventory_lots(db, products, warehouses, suppliers):
             "quantity_available": 290,
             "manufacture_date": date.today() - timedelta(days=45),
             "expiry_date": date.today() + timedelta(days=545),  # 1.5 years
-            "quality_status": QualityStatus.PASSED
+            "quality_status": QualityStatus.PASSED,
         },
         {
             "product_sku": "SUP001",
@@ -394,7 +412,7 @@ def seed_inventory_lots(db, products, warehouses, suppliers):
             "quantity_available": 475,
             "manufacture_date": date.today() - timedelta(days=15),
             "expiry_date": date.today() + timedelta(days=1095),  # 3 years
-            "quality_status": QualityStatus.PASSED
+            "quality_status": QualityStatus.PASSED,
         },
         {
             "product_sku": "MED004",
@@ -403,8 +421,8 @@ def seed_inventory_lots(db, products, warehouses, suppliers):
             "quantity_available": 95,
             "manufacture_date": date.today() - timedelta(days=20),
             "expiry_date": date.today() + timedelta(days=20),  # Expiring soon!
-            "quality_status": QualityStatus.PASSED
-        }
+            "quality_status": QualityStatus.PASSED,
+        },
     ]
 
     for lot_data in lots_data:
@@ -414,9 +432,9 @@ def seed_inventory_lots(db, products, warehouses, suppliers):
         if not product:
             continue
 
-        existing = db.query(InventoryLot).filter(
-            InventoryLot.lot_number == lot_data["lot_number"]
-        ).first()
+        existing = (
+            db.query(InventoryLot).filter(InventoryLot.lot_number == lot_data["lot_number"]).first()
+        )
 
         if not existing:
             lot = InventoryLot(
@@ -425,7 +443,7 @@ def seed_inventory_lots(db, products, warehouses, suppliers):
                 supplier_id=supplier.id,
                 received_date=date.today() - timedelta(days=30),
                 quality_checked_at=datetime.now() - timedelta(days=29),
-                **lot_data
+                **lot_data,
             )
             db.add(lot)
             print(f"  ✓ Created lot: {lot_data['lot_number']} for {product.name_th}")

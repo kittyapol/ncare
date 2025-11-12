@@ -66,6 +66,7 @@ class ManufacturingOrder(Base):
 
 class BillOfMaterials(Base):
     """Bill of Materials - Components needed for manufacturing"""
+
     __tablename__ = "bill_of_materials"
 
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)

@@ -14,10 +14,9 @@ if "sqlite" not in db_url.lower():
 else:
     # For SQLite, use StaticPool for in-memory databases
     if ":memory:" in db_url or "mode=memory" in db_url:
-        engine_kwargs.update({
-            "connect_args": {"check_same_thread": False},
-            "poolclass": StaticPool
-        })
+        engine_kwargs.update(
+            {"connect_args": {"check_same_thread": False}, "poolclass": StaticPool}
+        )
 
 engine = create_engine(db_url, **engine_kwargs)
 

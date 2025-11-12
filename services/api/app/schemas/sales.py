@@ -6,6 +6,7 @@ from decimal import Decimal
 
 class SalesOrderItemCreate(BaseModel):
     """Schema for creating sales order item"""
+
     product_id: str
     quantity: int = Field(gt=0)
     unit_price: Optional[Decimal] = None  # Will be fetched from product if not provided
@@ -15,6 +16,7 @@ class SalesOrderItemCreate(BaseModel):
 
 class SalesOrderItemResponse(BaseModel):
     """Schema for sales order item response"""
+
     id: str
     product_id: str
     quantity: int
@@ -34,6 +36,7 @@ class SalesOrderItemResponse(BaseModel):
 
 class SalesOrderCreate(BaseModel):
     """Schema for creating sales order"""
+
     customer_id: Optional[str] = None
     prescription_number: Optional[str] = None
     items: List[SalesOrderItemCreate]
@@ -44,6 +47,7 @@ class SalesOrderCreate(BaseModel):
 
 class SalesOrderResponse(BaseModel):
     """Schema for sales order response"""
+
     id: str
     order_number: str
     customer_id: Optional[str] = None
@@ -79,6 +83,7 @@ class SalesOrderResponse(BaseModel):
 
 class SalesOrderComplete(BaseModel):
     """Schema for completing sales order"""
+
     payment_method: str
     paid_amount: Decimal = Field(gt=0)
     pharmacist_id: Optional[str] = None
@@ -86,6 +91,7 @@ class SalesOrderComplete(BaseModel):
 
 class SalesOrderList(BaseModel):
     """Schema for paginated sales order list"""
+
     items: List[SalesOrderResponse]
     total: int
     skip: int

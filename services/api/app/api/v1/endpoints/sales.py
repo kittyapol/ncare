@@ -49,9 +49,7 @@ def get_sales_order(
     """Get sales order by ID"""
     order = db.query(SalesOrder).filter(SalesOrder.id == order_id).first()
     if not order:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Order not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
     return order
 
 
@@ -195,9 +193,7 @@ def complete_sales_order(
     """Complete sales order and process payment"""
     order = db.query(SalesOrder).filter(SalesOrder.id == order_id).first()
     if not order:
-        raise HTTPException(
-            status_code=status.HTTP_404_NOT_FOUND, detail="Order not found"
-        )
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
 
     if order.status == OrderStatus.COMPLETED:
         raise HTTPException(

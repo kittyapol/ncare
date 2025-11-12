@@ -99,9 +99,7 @@ def get_inventory_report(
     """Get inventory summary report"""
     # Total inventory value
     inventory_value = (
-        db.query(
-            func.sum(InventoryLot.quantity_available * Product.cost_price)
-        )
+        db.query(func.sum(InventoryLot.quantity_available * Product.cost_price))
         .join(Product)
         .scalar()
         or 0

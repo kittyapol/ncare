@@ -20,7 +20,9 @@ def get_categories(
     current_user: User = Depends(get_current_active_user),
 ) -> Any:
     """Get all categories"""
-    categories = db.query(Category).filter(Category.is_active == True).offset(skip).limit(limit).all()
+    categories = (
+        db.query(Category).filter(Category.is_active == True).offset(skip).limit(limit).all()
+    )
     return {"items": categories, "total": len(categories)}
 
 

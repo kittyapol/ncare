@@ -71,7 +71,9 @@ class SalesOrder(Base):
 
     # Relationships
     customer = relationship("Customer", back_populates="sales_orders")
-    items = relationship("SalesOrderItem", back_populates="sales_order", cascade="all, delete-orphan")
+    items = relationship(
+        "SalesOrderItem", back_populates="sales_order", cascade="all, delete-orphan"
+    )
     cashier = relationship("User", foreign_keys=[cashier_id])
     pharmacist = relationship("User", foreign_keys=[pharmacist_id])
 

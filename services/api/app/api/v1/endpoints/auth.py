@@ -45,9 +45,7 @@ def register(user_in: UserCreate, db: Session = Depends(get_db)) -> Any:
 
 
 @router.post("/login", response_model=Token)
-def login(
-    form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)
-) -> Any:
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)) -> Any:
     """OAuth2 compatible token login"""
     user = db.query(User).filter(User.email == form_data.username).first()
 
