@@ -67,7 +67,7 @@ export default function POSInterface() {
       product_id: product.id,
       product: product,
       quantity: 1,
-      unit_price: parseFloat(product.selling_price),
+      unit_price: product.selling_price,
       discount_amount: 0,
     });
     setSearch('');
@@ -187,7 +187,7 @@ export default function POSInterface() {
                     </div>
                     <div className="text-right">
                       <p className="font-bold text-primary-600">
-                        ฿{parseFloat(product.selling_price).toLocaleString()}
+                        ฿{product.selling_price.toLocaleString()}
                       </p>
                       <button className="text-sm text-primary-600 hover:text-primary-700">
                         + Add

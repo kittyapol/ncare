@@ -37,7 +37,7 @@ export default function BarcodeScanner({ onDetected, onClose }: BarcodeScannerPr
           ],
         },
       },
-      (err: Error | null) => {
+      (err: unknown) => {
         if (err) {
           console.error('Error initializing scanner:', err);
           return;
