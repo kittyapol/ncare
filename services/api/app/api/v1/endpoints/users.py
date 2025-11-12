@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_admin_user, get_db
 from app.core.security import get_password_hash
 from app.models.user import User
-from app.schemas.auth import UserCreate, UserResponse
+from app.schemas.auth import UserCreate, UserResponse, UserUpdate
 
 router = APIRouter()
 
@@ -68,7 +68,7 @@ def get_user(
 @router.put("/{user_id}", response_model=UserResponse)
 def update_user(
     user_id: str,
-    user_data: dict,
+    user_data: UserUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_admin_user),
 ) -> Any:
@@ -77,11 +77,16 @@ def update_user(
     if not user:
         raise HTTPException(status_code=404, detail="User not found")
 
-    # Don't allow updating password this way
-    if "password" in user_data:
-        del user_data["password"]
+    # Only update fields that were provided
+    update_data = user_data.model_dump(exclude_unset=True)
 
-    for field, value in user_data.items():
+    # Check if email is being changed and if it's already taken
+    if "email" in update_data and update_data["email"] != user.email:
+        existing = db.query(User).filter(User.email == update_data["email"]).first()
+        if existing:
+            raise HTTPException(status_code=400, detail="Email already registered")
+
+    for field, value in update_data.items():
         setattr(user, field, value)
 
     db.commit()
@@ -102,7 +107,7 @@ def deactivate_user(
         raise HTTPException(status_code=404, detail="User not found")
 
     # Don't allow deactivating self
-    if user.id == current_user.id:
+    if str(user.id) == str(current_user.id):
         raise HTTPException(status_code=400, detail="Cannot deactivate yourself")
 
     user.is_active = False

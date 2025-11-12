@@ -21,6 +21,15 @@ class UserLogin(BaseModel):
     password: str
 
 
+class UserUpdate(BaseModel):
+    """Schema for updating user (all fields optional except password)"""
+
+    email: Optional[EmailStr] = None
+    full_name: Optional[str] = None
+    role: Optional[UserRole] = None
+    is_active: Optional[bool] = None
+
+
 class UserResponse(UserBase):
     id: str
     is_active: bool

@@ -10,11 +10,17 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_active_user, get_db, get_manager_or_admin
 from app.models.supplier import Supplier
 from app.models.user import User
+from app.schemas.supplier import (
+    SupplierCreate,
+    SupplierList,
+    SupplierResponse,
+    SupplierUpdate,
+)
 
 router = APIRouter()
 
 
-@router.get("/")
+@router.get("/", response_model=SupplierList)
 def get_suppliers(
     skip: int = 0,
     limit: int = 100,
@@ -34,19 +40,19 @@ def get_suppliers(
     return {"items": suppliers, "total": total}
 
 
-@router.post("/")
+@router.post("/", response_model=SupplierResponse)
 def create_supplier(
-    supplier_data: dict,
+    supplier_data: SupplierCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_manager_or_admin),
 ) -> Any:
     """Create new supplier"""
     # Check if code exists
-    existing = db.query(Supplier).filter(Supplier.code == supplier_data.get("code")).first()
+    existing = db.query(Supplier).filter(Supplier.code == supplier_data.code).first()
     if existing:
         raise HTTPException(status_code=400, detail="Supplier code already exists")
 
-    supplier = Supplier(**supplier_data)
+    supplier = Supplier(**supplier_data.model_dump())
     db.add(supplier)
     db.commit()
     db.refresh(supplier)
@@ -54,7 +60,7 @@ def create_supplier(
     return supplier
 
 
-@router.get("/{supplier_id}")
+@router.get("/{supplier_id}", response_model=SupplierResponse)
 def get_supplier(
     supplier_id: str,
     db: Session = Depends(get_db),
@@ -67,10 +73,10 @@ def get_supplier(
     return supplier
 
 
-@router.put("/{supplier_id}")
+@router.put("/{supplier_id}", response_model=SupplierResponse)
 def update_supplier(
     supplier_id: str,
-    supplier_data: dict,
+    supplier_data: SupplierUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_manager_or_admin),
 ) -> Any:
@@ -79,7 +85,9 @@ def update_supplier(
     if not supplier:
         raise HTTPException(status_code=404, detail="Supplier not found")
 
-    for field, value in supplier_data.items():
+    # Only update fields that were provided
+    update_data = supplier_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
         setattr(supplier, field, value)
 
     db.commit()
