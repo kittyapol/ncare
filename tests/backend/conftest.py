@@ -2,18 +2,100 @@
 Pytest configuration and fixtures for backend tests
 """
 import pytest
-from fastapi.testclient import TestClient
-from sqlalchemy import create_engine
+import uuid
+from sqlalchemy import create_engine, TypeDecorator, String
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
 
+# Patch UUID and JSONB columns for SQLite compatibility BEFORE importing models
+import sqlalchemy.dialects.postgresql as pg
+import json
+from sqlalchemy import Text
+
+# Store original types before patching
+_original_pg_UUID = pg.UUID
+_original_pg_JSONB = pg.JSONB
+
+class SQLiteCompatibleUUID(TypeDecorator):
+    """Platform-independent UUID type that works with both PostgreSQL and SQLite."""
+    impl = String(36)
+    cache_ok = True
+
+    def __init__(self, as_uuid=True):
+        self.as_uuid = as_uuid
+        super().__init__()
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(_original_pg_UUID(as_uuid=self.as_uuid))
+        else:
+            return dialect.type_descriptor(String(36))
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        elif dialect.name == 'postgresql':
+            return value
+        else:
+            if isinstance(value, uuid.UUID):
+                return str(value)
+            return str(value) if value else None
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        if isinstance(value, uuid.UUID):
+            return value
+        try:
+            return uuid.UUID(value)
+        except (TypeError, ValueError, AttributeError):
+            return value
+
+class SQLiteCompatibleJSONB(TypeDecorator):
+    """Platform-independent JSONB type that works with both PostgreSQL and SQLite."""
+    impl = Text
+    cache_ok = True
+
+    def load_dialect_impl(self, dialect):
+        if dialect.name == 'postgresql':
+            return dialect.type_descriptor(_original_pg_JSONB())
+        else:
+            return dialect.type_descriptor(Text())
+
+    def process_bind_param(self, value, dialect):
+        if value is None:
+            return value
+        elif dialect.name == 'postgresql':
+            return value
+        else:
+            return json.dumps(value)
+
+    def process_result_value(self, value, dialect):
+        if value is None:
+            return value
+        elif dialect.name == 'postgresql':
+            return value
+        else:
+            return json.loads(value) if value else None
+
+# Replace types in postgresql dialect
+pg.UUID = SQLiteCompatibleUUID
+pg.JSONB = SQLiteCompatibleJSONB
+
+# Now import app modules AFTER patching
+from fastapi.testclient import TestClient
 from app.main import app
 from app.core.database import Base, get_db
 from app.core.security import get_password_hash
 from app.models.user import User, UserRole
 from app.models.product import Product, Category
-from app.models.warehouse import Warehouse, WarehouseType
+from app.models.inventory import Warehouse, WarehouseType, InventoryLot
 from app.models.supplier import Supplier
+from app.models.customer import Customer
+from app.models.sales import SalesOrder, SalesOrderItem
+from app.models.purchase import PurchaseOrder, PurchaseOrderItem
+from app.models.manufacturing import ManufacturingOrder, BillOfMaterials
+from app.models.audit import AuditLog
 
 # Test database URL (in-memory SQLite for testing)
 SQLALCHEMY_DATABASE_URL = "sqlite:///:memory:"
@@ -106,7 +188,7 @@ def cashier_user(db_session):
 
 
 @pytest.fixture
-def auth_headers_admin(client, admin_user):
+def auth_headers_admin(admin_user, client):
     """Get auth headers for admin user"""
     response = client.post(
         "/api/v1/auth/login",
@@ -117,7 +199,7 @@ def auth_headers_admin(client, admin_user):
 
 
 @pytest.fixture
-def auth_headers_manager(client, manager_user):
+def auth_headers_manager(manager_user, client):
     """Get auth headers for manager user"""
     response = client.post(
         "/api/v1/auth/login",
@@ -128,7 +210,7 @@ def auth_headers_manager(client, manager_user):
 
 
 @pytest.fixture
-def auth_headers_cashier(client, cashier_user):
+def auth_headers_cashier(cashier_user, client):
     """Get auth headers for cashier user"""
     response = client.post(
         "/api/v1/auth/login",
