@@ -614,3 +614,95 @@ def export_vat_sales_excel(
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
         headers={"Content-Disposition": f"attachment; filename={filename}"}
     )
+
+
+@router.get("/vat-purchases/export-pdf")
+def export_vat_purchases_pdf(
+    start_date: date = Query(...),
+    end_date: date = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> StreamingResponse:
+    """Export VAT Purchases Report as PDF"""
+    # Get report data
+    report_data = get_vat_purchases_report(start_date, end_date, db, current_user)
+
+    # Generate PDF
+    pdf_buffer = PDFExportService.generate_vat_purchases_pdf(report_data)
+
+    # Return as downloadable file
+    filename = f"vat_purchases_{start_date}_{end_date}.pdf"
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@router.get("/vat-purchases/export-excel")
+def export_vat_purchases_excel(
+    start_date: date = Query(...),
+    end_date: date = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> StreamingResponse:
+    """Export VAT Purchases Report as Excel"""
+    # Get report data
+    report_data = get_vat_purchases_report(start_date, end_date, db, current_user)
+
+    # Generate Excel
+    excel_buffer = ExcelExportService.generate_vat_purchases_excel(report_data)
+
+    # Return as downloadable file
+    filename = f"vat_purchases_{start_date}_{end_date}.xlsx"
+    return StreamingResponse(
+        excel_buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@router.get("/cogs/export-pdf")
+def export_cogs_pdf(
+    start_date: date = Query(...),
+    end_date: date = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> StreamingResponse:
+    """Export COGS Report as PDF"""
+    # Get report data
+    report_data = get_cogs_report(start_date, end_date, db, current_user)
+
+    # Generate PDF
+    pdf_buffer = PDFExportService.generate_cogs_pdf(report_data)
+
+    # Return as downloadable file
+    filename = f"cogs_{start_date}_{end_date}.pdf"
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@router.get("/cogs/export-excel")
+def export_cogs_excel(
+    start_date: date = Query(...),
+    end_date: date = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> StreamingResponse:
+    """Export COGS Report as Excel"""
+    # Get report data
+    report_data = get_cogs_report(start_date, end_date, db, current_user)
+
+    # Generate Excel
+    excel_buffer = ExcelExportService.generate_cogs_excel(report_data)
+
+    # Return as downloadable file
+    filename = f"cogs_{start_date}_{end_date}.xlsx"
+    return StreamingResponse(
+        excel_buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
