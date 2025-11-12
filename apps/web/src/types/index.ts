@@ -102,6 +102,32 @@ export interface SalesOrderItem {
   product?: Product;
 }
 
+export interface Supplier {
+  id: string;
+  code: string;
+  name_th: string;
+  name_en?: string;
+  tax_id?: string;
+  contact_person?: string;
+  email?: string;
+  phone?: string;
+  fax?: string;
+  mobile?: string;
+  address?: string;
+  city?: string;
+  province?: string;
+  postal_code?: string;
+  country?: string;
+  payment_terms?: string;
+  credit_limit?: string;
+  discount_terms?: string;
+  is_active: boolean;
+  rating?: string;
+  notes?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
 export interface PurchaseOrder {
   id: string;
   po_number: string;
@@ -115,13 +141,15 @@ export interface PurchaseOrder {
   order_date: string;
   expected_delivery_date?: string;
   actual_delivery_date?: string;
-  created_by: string;
+  created_by?: string;
   approved_by?: string;
   notes?: string;
   terms_and_conditions?: string;
   created_at: string;
   updated_at?: string;
   items: PurchaseOrderItem[];
+  // Nested relations (when included)
+  supplier?: Supplier;
 }
 
 export interface PurchaseOrderItem {
@@ -135,6 +163,8 @@ export interface PurchaseOrderItem {
   line_total: number;
   notes?: string;
   created_at: string;
+  // Nested product data (when included)
+  product?: Product;
 }
 
 export interface DashboardStats {
