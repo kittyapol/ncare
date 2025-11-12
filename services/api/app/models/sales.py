@@ -50,13 +50,13 @@ class SalesOrder(Base):
     total_amount = Column(Numeric(10, 2), nullable=False)
 
     # Payment
-    payment_method = Column(Enum(PaymentMethod))
-    payment_status = Column(Enum(PaymentStatus), default=PaymentStatus.PENDING)
+    payment_method: Column[PaymentMethod] = Column(Enum(PaymentMethod))  # type: ignore[assignment]
+    payment_status: Column[PaymentStatus] = Column(Enum(PaymentStatus), default=PaymentStatus.PENDING)  # type: ignore[assignment]
     paid_amount = Column(Numeric(10, 2), default=0)
     change_amount = Column(Numeric(10, 2), default=0)
 
     # Status
-    status = Column(Enum(OrderStatus), default=OrderStatus.DRAFT)
+    status: Column[OrderStatus] = Column(Enum(OrderStatus), default=OrderStatus.DRAFT)  # type: ignore[assignment]
 
     # References
     cashier_id = Column(UUID(as_uuid=True), ForeignKey("users.id"))

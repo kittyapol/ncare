@@ -1,5 +1,6 @@
 import enum
 import uuid
+from decimal import Decimal
 
 from sqlalchemy import Boolean, Column, DateTime, Enum, ForeignKey, Integer, Numeric, String, Text
 from sqlalchemy.dialects.postgresql import UUID
@@ -66,9 +67,9 @@ class Product(Base):
 
     # Pharmaceutical details
     active_ingredient = Column(String(500))
-    dosage_form = Column(Enum(DosageForm))
+    dosage_form: Column[DosageForm] = Column(Enum(DosageForm))  # type: ignore[assignment]
     strength = Column(String(100))  # e.g., "500mg"
-    drug_type = Column(Enum(DrugType), default=DrugType.OTC)
+    drug_type: Column[DrugType] = Column(Enum(DrugType), default=DrugType.OTC)  # type: ignore[assignment]
     fda_number = Column(String(100))
     manufacturer = Column(String(255))
 
@@ -78,7 +79,7 @@ class Product(Base):
 
     # VAT (Value Added Tax) - Thailand Tax Compliance
     is_vat_applicable = Column(Boolean, default=True)
-    vat_rate = Column(Numeric(5, 2), default=7.00)  # Thailand standard VAT rate is 7%
+    vat_rate = Column(Numeric(5, 2), default=Decimal("7.00"))  # Thailand standard VAT rate is 7%
     vat_category = Column(String(50), default="standard")  # standard, exempt, zero-rated
 
     # Stock management

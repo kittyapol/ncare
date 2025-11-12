@@ -1,4 +1,5 @@
 from datetime import date, datetime
+from decimal import Decimal
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException
@@ -134,8 +135,8 @@ def receive_purchase_order(
         unit_cost = po_item.unit_price
         if hasattr(po_item, "is_vat_included") and po_item.is_vat_included:
             # ถ้ารวม VAT แล้ว หารออกเพื่อได้ราคาก่อน VAT
-            vat_rate = po_item.vat_rate if hasattr(po_item, "vat_rate") else 7.00
-            unit_cost = po_item.unit_price / (1 + float(vat_rate) / 100)
+            vat_rate = po_item.vat_rate if hasattr(po_item, "vat_rate") else Decimal("7.00")
+            unit_cost = po_item.unit_price / (Decimal("1") + Decimal(str(vat_rate)) / Decimal("100"))
 
         lot = InventoryLot(
             product_id=item_data.product_id,

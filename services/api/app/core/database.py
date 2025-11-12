@@ -1,3 +1,5 @@
+from typing import Any
+
 from sqlalchemy import create_engine
 from sqlalchemy.ext.declarative import declarative_base
 from sqlalchemy.orm import sessionmaker
@@ -7,7 +9,7 @@ from app.core.config import settings
 
 # Create database engine with conditional configuration based on database type
 db_url = settings.DATABASE_URL
-engine_kwargs = {"pool_pre_ping": True}
+engine_kwargs: dict[str, Any] = {"pool_pre_ping": True}
 
 # SQLite doesn't support pool_size and max_overflow
 if "sqlite" not in db_url.lower():

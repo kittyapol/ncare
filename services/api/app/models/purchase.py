@@ -46,7 +46,7 @@ class PurchaseOrder(Base):
     total_amount = Column(Numeric(12, 2), nullable=False)
 
     # Status
-    status = Column(Enum(PurchaseOrderStatus), default=PurchaseOrderStatus.DRAFT)
+    status: Column[PurchaseOrderStatus] = Column(Enum(PurchaseOrderStatus), default=PurchaseOrderStatus.DRAFT)  # type: ignore[assignment]
 
     # Dates
     order_date = Column(Date, nullable=False)

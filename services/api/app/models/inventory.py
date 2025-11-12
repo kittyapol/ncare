@@ -39,7 +39,7 @@ class Warehouse(Base):
     id = Column(UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
     code = Column(String(50), unique=True, nullable=False)
     name = Column(String(255), nullable=False)
-    type = Column(Enum(WarehouseType), default=WarehouseType.MAIN)
+    type: Column[WarehouseType] = Column(Enum(WarehouseType), default=WarehouseType.MAIN)  # type: ignore[assignment]
     address = Column(String(500))
     is_active = Column(Boolean, default=True)
     created_at = Column(DateTime(timezone=True), server_default=func.now())
@@ -78,7 +78,7 @@ class InventoryLot(Base):
     received_date = Column(Date, nullable=False)
 
     # Quality
-    quality_status = Column(Enum(QualityStatus), default=QualityStatus.PENDING)
+    quality_status: Column[QualityStatus] = Column(Enum(QualityStatus), default=QualityStatus.PENDING)  # type: ignore[assignment]
     quality_checked_at = Column(DateTime(timezone=True))
     quality_notes = Column(String(500))
 

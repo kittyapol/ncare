@@ -35,7 +35,7 @@ class ManufacturingOrder(Base):
     lot_number = Column(String(100))
 
     # Status
-    status = Column(Enum(ManufacturingStatus), default=ManufacturingStatus.DRAFT)
+    status: Column[ManufacturingStatus] = Column(Enum(ManufacturingStatus), default=ManufacturingStatus.DRAFT)  # type: ignore[assignment]
     quality_status = Column(String(50))
 
     # References
