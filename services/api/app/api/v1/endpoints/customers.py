@@ -11,11 +11,17 @@ from sqlalchemy.orm import Session
 from app.api.deps import get_current_active_user, get_db
 from app.models.customer import Customer
 from app.models.user import User
+from app.schemas.customer import (
+    CustomerCreate,
+    CustomerList,
+    CustomerResponse,
+    CustomerUpdate,
+)
 
 router = APIRouter()
 
 
-@router.get("/")
+@router.get("/", response_model=CustomerList)
 def get_customers(
     skip: int = 0,
     limit: int = 100,
@@ -42,19 +48,19 @@ def get_customers(
     return {"items": customers, "total": total}
 
 
-@router.post("/")
+@router.post("/", response_model=CustomerResponse)
 def create_customer(
-    customer_data: dict,
+    customer_data: CustomerCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> Any:
     """Create new customer"""
     # Check if code exists
-    existing = db.query(Customer).filter(Customer.code == customer_data.get("code")).first()
+    existing = db.query(Customer).filter(Customer.code == customer_data.code).first()
     if existing:
         raise HTTPException(status_code=400, detail="Customer code already exists")
 
-    customer = Customer(**customer_data)
+    customer = Customer(**customer_data.model_dump())
     db.add(customer)
     db.commit()
     db.refresh(customer)
@@ -87,7 +93,7 @@ def search_customers(
     return customers
 
 
-@router.get("/{customer_id}")
+@router.get("/{customer_id}", response_model=CustomerResponse)
 def get_customer(
     customer_id: str,
     db: Session = Depends(get_db),
@@ -100,10 +106,10 @@ def get_customer(
     return customer
 
 
-@router.put("/{customer_id}")
+@router.put("/{customer_id}", response_model=CustomerResponse)
 def update_customer(
     customer_id: str,
-    customer_data: dict,
+    customer_data: CustomerUpdate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_active_user),
 ) -> Any:
@@ -112,13 +118,33 @@ def update_customer(
     if not customer:
         raise HTTPException(status_code=404, detail="Customer not found")
 
-    for field, value in customer_data.items():
+    # Only update fields that were provided
+    update_data = customer_data.model_dump(exclude_unset=True)
+    for field, value in update_data.items():
         setattr(customer, field, value)
 
     db.commit()
     db.refresh(customer)
 
     return customer
+
+
+@router.delete("/{customer_id}")
+def delete_customer(
+    customer_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_active_user),
+) -> Any:
+    """Delete (deactivate) customer"""
+    customer = db.query(Customer).filter(Customer.id == customer_id).first()
+    if not customer:
+        raise HTTPException(status_code=404, detail="Customer not found")
+
+    # Soft delete
+    customer.is_active = False
+    db.commit()
+
+    return {"message": "Customer deleted successfully"}
 
 
 @router.post("/{customer_id}/loyalty-points")
