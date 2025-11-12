@@ -151,9 +151,7 @@ jobs:
           run_install: false
 
       - name: Install dependencies
-        run: |
-          cd apps/web
-          pnpm install --no-frozen-lockfile
+        run: pnpm install --no-frozen-lockfile
 
       - name: Lint
         run: cd apps/web && pnpm lint
