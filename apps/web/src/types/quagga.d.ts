@@ -4,7 +4,13 @@ declare module 'quagga' {
       name?: string
       type?: string
       target?: HTMLElement | string
-      constraints?: MediaStreamConstraints
+      constraints?: {
+        width?: number
+        height?: number
+        facingMode?: string | { exact: string } | { ideal: string }
+        aspectRatio?: number
+        deviceId?: string
+      }
       area?: {
         top?: string
         right?: string
