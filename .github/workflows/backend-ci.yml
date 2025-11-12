@@ -138,7 +138,7 @@ jobs:
       - name: Upload coverage reports to Codecov
         uses: codecov/codecov-action@v3
         with:
-          files: ./coverage.xml
+          files: services/api/coverage.xml
           flags: backend
           name: backend-coverage
         continue-on-error: true
@@ -149,8 +149,8 @@ jobs:
         with:
           name: test-results
           path: |
-            htmlcov/
-            coverage.xml
+            services/api/htmlcov/
+            services/api/coverage.xml
           retention-days: 30
         continue-on-error: true
 
