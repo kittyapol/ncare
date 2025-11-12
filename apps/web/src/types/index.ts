@@ -93,7 +93,13 @@ export interface SalesOrderItem {
   unit_price: number;
   discount_amount: number;
   line_total: number;
+  // VAT breakdown for tax reporting
+  vat_amount: number;
+  price_before_vat: number;
+  price_including_vat: number;
   created_at: string;
+  // Nested product data (when included in response)
+  product?: Product;
 }
 
 export interface PurchaseOrder {

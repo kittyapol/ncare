@@ -3,6 +3,8 @@ import { useMutation, useQueryClient } from '@tanstack/react-query';
 import { useCartStore } from '@/stores/cartStore';
 import { useSearchProducts } from '@/hooks/useProducts';
 import BarcodeInput from '@/components/barcode/BarcodeInput';
+import ReceiptModal from '@/components/modals/ReceiptModal';
+import { SalesOrder } from '@/types';
 import api from '@/services/api';
 
 export default function POSInterface() {
@@ -11,6 +13,8 @@ export default function POSInterface() {
   const [paymentMethod, setPaymentMethod] = useState('cash');
   const [paidAmount, setPaidAmount] = useState<number>(0);
   const [showPayment, setShowPayment] = useState(false);
+  const [completedOrder, setCompletedOrder] = useState<SalesOrder | null>(null);
+  const [showReceipt, setShowReceipt] = useState(false);
 
   const {
     items,
@@ -42,11 +46,14 @@ export default function POSInterface() {
       const response = await api.post(`/sales/orders/${orderId}/complete`, data);
       return response.data;
     },
-    onSuccess: () => {
+    onSuccess: (completedOrderData: SalesOrder) => {
+      // Show receipt immediately after successful payment
+      setCompletedOrder(completedOrderData);
+      setShowReceipt(true);
+      // Clear cart and payment state
       clearCart();
       setShowPayment(false);
       setPaidAmount(0);
-      alert('Sale completed successfully!');
     },
   });
 
@@ -334,6 +341,13 @@ export default function POSInterface() {
           </div>
         </div>
       )}
+
+      {/* Receipt Modal */}
+      <ReceiptModal
+        isOpen={showReceipt}
+        onClose={() => setShowReceipt(false)}
+        order={completedOrder}
+      />
     </div>
   );
 }
