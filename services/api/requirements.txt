@@ -12,6 +12,7 @@ asyncpg==0.29.0
 # Authentication & Security
 python-jose[cryptography]==3.3.0
 passlib[bcrypt]==1.7.4
+bcrypt<4.0.0  # Pin bcrypt to <4.0.0 for passlib 1.7.4 compatibility
 python-dotenv==1.0.0
 pydantic[email]==2.5.0
 pydantic-settings==2.1.0
