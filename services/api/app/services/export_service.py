@@ -178,7 +178,10 @@ class PDFExportService:
         # Summary
         summary = data["summary"]
         summary_data = [
-            ["มูลค่าก่อน VAT", f"฿{PDFExportService.format_thai_number(summary['total_before_vat'])}"],
+            [
+                "มูลค่าก่อน VAT",
+                f"฿{PDFExportService.format_thai_number(summary['total_before_vat'])}",
+            ],
             ["VAT 7%", f"฿{PDFExportService.format_thai_number(summary['total_vat_amount'])}"],
             [
                 "มูลค่ารวม VAT",
@@ -285,7 +288,10 @@ class PDFExportService:
         # Summary
         summary = data["summary"]
         summary_data = [
-            ["มูลค่าก่อน VAT", f"฿{PDFExportService.format_thai_number(summary['total_before_vat'])}"],
+            [
+                "มูลค่าก่อน VAT",
+                f"฿{PDFExportService.format_thai_number(summary['total_before_vat'])}",
+            ],
             ["VAT ที่ซื้อ", f"฿{PDFExportService.format_thai_number(summary['total_vat_amount'])}"],
             [
                 "มูลค่ารวม VAT",
