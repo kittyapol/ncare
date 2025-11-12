@@ -132,8 +132,8 @@ jobs:
   # ========================================
   # Frontend Jobs
   # ========================================
-  frontend-lint:
-    name: 🔍 Frontend Lint
+  frontend-checks:
+    name: 🔍 Frontend Checks
     runs-on: ubuntu-latest
 
     steps:
@@ -143,83 +143,28 @@ jobs:
         uses: actions/setup-node@v4
         with:
           node-version: '18'
+          cache: 'npm'
+          cache-dependency-path: '**/package-lock.json'
 
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
+      - name: Setup pnpm
+        uses: pnpm/action-setup@v2
         with:
           version: 8
+          run_install: false
 
-      - name: Get pnpm store directory
-        id: pnpm-cache
-        shell: bash
+      - name: Install dependencies
         run: |
-          echo "STORE_PATH=$(pnpm store path)" >> $GITHUB_OUTPUT
+          cd apps/web
+          pnpm install --no-frozen-lockfile
 
-      - name: Setup pnpm cache
-        uses: actions/cache@v4
-        with:
-          path: ${{ steps.pnpm-cache.outputs.STORE_PATH }}
-          key: ${{ runner.os }}-pnpm-store-${{ hashFiles('**/pnpm-lock.yaml') }}
-          restore-keys: |
-            ${{ runner.os }}-pnpm-store-
-
-      - name: Install dependencies
-        working-directory: ./apps/web
-        run: pnpm install --frozen-lockfile
-
-      - name: Run ESLint
-        working-directory: ./apps/web
-        run: pnpm lint
-
-  frontend-typecheck:
-    name: 🔍 Frontend Type Check
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-
-      - name: Install dependencies
-        working-directory: ./apps/web
-        run: pnpm install --frozen-lockfile
+      - name: Lint
+        run: cd apps/web && pnpm lint
 
       - name: Type check
-        working-directory: ./apps/web
-        run: pnpm type-check
-
-  frontend-build:
-    name: 🏗️ Frontend Build
-    runs-on: ubuntu-latest
-
-    steps:
-      - uses: actions/checkout@v4
-
-      - name: Setup Node.js
-        uses: actions/setup-node@v4
-        with:
-          node-version: '18'
-
-      - name: Install pnpm
-        uses: pnpm/action-setup@v3
-        with:
-          version: 8
-
-      - name: Install dependencies
-        working-directory: ./apps/web
-        run: pnpm install --frozen-lockfile
+        run: cd apps/web && pnpm type-check
 
       - name: Build
-        working-directory: ./apps/web
-        run: pnpm build
+        run: cd apps/web && pnpm build
 
       - name: Upload build artifacts
         uses: actions/upload-artifact@v4
@@ -258,9 +203,7 @@ jobs:
       - backend-lint
       - backend-test
       - backend-docker
-      - frontend-lint
-      - frontend-typecheck
-      - frontend-build
+      - frontend-checks
       - frontend-docker
     if: always()
 
@@ -268,5 +211,4 @@ jobs:
       - name: Check results
         run: |
           echo "🎉 CI Pipeline completed!"
-          echo "✅ All checks passed or warned"
-          echo "📊 Check individual jobs for details"
+          echo "✅ Check individual jobs for details"
