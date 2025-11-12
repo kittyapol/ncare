@@ -24,6 +24,10 @@ export interface Product {
   manufacturer?: string;
   cost_price: number;
   selling_price: number;
+  // VAT fields for Thailand tax compliance
+  is_vat_applicable: boolean;
+  vat_rate: number;
+  vat_category: 'standard' | 'exempt' | 'zero-rated';
   unit_of_measure: string;
   minimum_stock: number;
   reorder_point: number;
