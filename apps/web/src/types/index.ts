@@ -7,6 +7,31 @@ export interface User {
   created_at: string;
 }
 
+export interface Customer {
+  id: string;
+  code: string;
+  name: string;
+  national_id?: string;
+  date_of_birth?: string;
+  gender?: string;
+  email?: string;
+  phone?: string;
+  mobile?: string;
+  address?: string;
+  city?: string;
+  province?: string;
+  postal_code?: string;
+  loyalty_points: number;
+  member_since?: string;
+  membership_tier?: string;
+  allergies?: string;
+  chronic_conditions?: string;
+  is_active: boolean;
+  notes?: string;
+  created_at: string;
+  updated_at?: string;
+}
+
 export interface Product {
   id: string;
   sku: string;
