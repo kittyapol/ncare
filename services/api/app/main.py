@@ -1,10 +1,9 @@
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
-from fastapi.middleware.trustedhost import TrustedHostMiddleware
 from fastapi.responses import JSONResponse
 
-from app.core.config import settings
 from app.api.v1.api import api_router
+from app.core.config import settings
 
 # Create FastAPI application
 app = FastAPI(
@@ -55,8 +54,9 @@ async def readiness_check():
     Readiness check endpoint - checks if service can handle requests
     Checks database connectivity and other dependencies
     """
-    from app.core.database import SessionLocal
     from sqlalchemy import text
+
+    from app.core.database import SessionLocal
 
     health_status = {"status": "ready", "service": "api", "checks": {}}
 

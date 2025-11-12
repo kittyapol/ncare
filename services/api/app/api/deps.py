@@ -2,7 +2,9 @@
 API Dependencies
 Common dependencies for API endpoints
 """
-from typing import Generator, Optional
+
+from typing import Generator
+
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from sqlalchemy.orm import Session

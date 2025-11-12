@@ -1,12 +1,14 @@
 """
 Customers API endpoints
 """
-from typing import Any, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import or_
 
-from app.api.deps import get_db, get_current_active_user
+from typing import Any, Optional
+
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import or_
+from sqlalchemy.orm import Session
+
+from app.api.deps import get_current_active_user, get_db
 from app.models.customer import Customer
 from app.models.user import User
 
@@ -22,7 +24,7 @@ def get_customers(
     current_user: User = Depends(get_current_active_user),
 ) -> Any:
     """Get all customers"""
-    query = db.query(Customer).filter(Customer.is_active == True)
+    query = db.query(Customer).filter(Customer.is_active)
 
     if search:
         query = query.filter(
@@ -71,7 +73,7 @@ def search_customers(
     customers = (
         db.query(Customer)
         .filter(
-            Customer.is_active == True,
+            Customer.is_active,
             or_(
                 Customer.name.ilike(f"%{q}%"),
                 Customer.code.ilike(f"%{q}%"),

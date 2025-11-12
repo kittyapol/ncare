@@ -1,6 +1,7 @@
 from typing import List
-from pydantic_settings import BaseSettings
+
 from pydantic import validator
+from pydantic_settings import BaseSettings
 
 
 class Settings(BaseSettings):
@@ -26,7 +27,7 @@ class Settings(BaseSettings):
     CORS_ORIGINS: List[str] = ["http://localhost:5173", "http://localhost:3000"]
 
     @validator("CORS_ORIGINS", pre=True)
-    def assemble_cors_origins(cls, v):
+    def assemble_cors_origins(self, v):
         if isinstance(v, str):
             return [i.strip() for i in v.split(",")]
         return v

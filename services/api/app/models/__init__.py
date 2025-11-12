@@ -1,12 +1,12 @@
-from app.models.user import User
-from app.models.product import Product, Category
-from app.models.inventory import InventoryLot, Warehouse
-from app.models.sales import SalesOrder, SalesOrderItem
-from app.models.purchase import PurchaseOrder, PurchaseOrderItem
-from app.models.manufacturing import ManufacturingOrder, BillOfMaterials
-from app.models.supplier import Supplier
-from app.models.customer import Customer
 from app.models.audit import AuditLog
+from app.models.customer import Customer
+from app.models.inventory import InventoryLot, Warehouse
+from app.models.manufacturing import BillOfMaterials, ManufacturingOrder
+from app.models.product import Category, Product
+from app.models.purchase import PurchaseOrder, PurchaseOrderItem
+from app.models.sales import SalesOrder, SalesOrderItem
+from app.models.supplier import Supplier
+from app.models.user import User
 
 __all__ = [
     "User",

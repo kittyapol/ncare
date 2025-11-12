@@ -1,20 +1,21 @@
+import enum
 import uuid
+
 from sqlalchemy import (
+    Boolean,
     Column,
-    String,
+    Date,
     DateTime,
+    Enum,
     ForeignKey,
     Integer,
-    Date,
-    Enum,
-    Boolean,
     Numeric,
-    Text,
+    String,
 )
 from sqlalchemy.dialects.postgresql import UUID
 from sqlalchemy.orm import relationship
 from sqlalchemy.sql import func
-import enum
+
 from app.core.database import Base
 
 

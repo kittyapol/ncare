@@ -1,13 +1,15 @@
 """
 Users management API endpoints
 """
+
 from typing import Any, List
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, get_current_active_user, get_admin_user
+from app.api.deps import get_admin_user, get_db
 from app.core.security import get_password_hash
-from app.models.user import User, UserRole
+from app.models.user import User
 from app.schemas.auth import UserCreate, UserResponse
 
 router = APIRouter()

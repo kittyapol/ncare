@@ -1,11 +1,13 @@
 """
 Suppliers API endpoints
 """
+
 from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, get_current_active_user, get_manager_or_admin
+from app.api.deps import get_current_active_user, get_db, get_manager_or_admin
 from app.models.supplier import Supplier
 from app.models.user import User
 

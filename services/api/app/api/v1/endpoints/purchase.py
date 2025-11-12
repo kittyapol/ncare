@@ -1,16 +1,17 @@
+from datetime import date, datetime
 from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
-from datetime import datetime, date
 
-from app.core.database import get_db
-from app.models.purchase import PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus
-from app.models.inventory import InventoryLot, QualityStatus
-from app.models.user import User
 from app.api.v1.endpoints.auth import get_current_user
+from app.core.database import get_db
+from app.models.inventory import InventoryLot, QualityStatus
+from app.models.purchase import PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus
+from app.models.user import User
 from app.schemas.purchase import (
-    PurchaseOrderList,
     PurchaseOrderCreate,
+    PurchaseOrderList,
     PurchaseOrderResponse,
     ReceivePurchaseOrderRequest,
     ReceivePurchaseOrderResponse,
@@ -125,15 +126,15 @@ def receive_purchase_order(
         if not po_item:
             raise HTTPException(
                 status_code=400,
-                detail=f"Product {item_data.product_id} not found in purchase order"
+                detail=f"Product {item_data.product_id} not found in purchase order",
             )
 
         # Calculate unit cost (ต้นทุนจริงก่อน VAT)
         # ถ้าราคารวม VAT แล้ว ต้องหารออกเพื่อได้ต้นทุนจริง
         unit_cost = po_item.unit_price
-        if hasattr(po_item, 'is_vat_included') and po_item.is_vat_included:
+        if hasattr(po_item, "is_vat_included") and po_item.is_vat_included:
             # ถ้ารวม VAT แล้ว หารออกเพื่อได้ราคาก่อน VAT
-            vat_rate = po_item.vat_rate if hasattr(po_item, 'vat_rate') else 7.00
+            vat_rate = po_item.vat_rate if hasattr(po_item, "vat_rate") else 7.00
             unit_cost = po_item.unit_price / (1 + float(vat_rate) / 100)
 
         lot = InventoryLot(
@@ -160,6 +161,4 @@ def receive_purchase_order(
 
     db.commit()
 
-    return ReceivePurchaseOrderResponse(
-        message="Purchase order received successfully"
-    )
+    return ReceivePurchaseOrderResponse(message="Purchase order received successfully")

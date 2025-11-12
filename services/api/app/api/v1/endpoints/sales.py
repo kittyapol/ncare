@@ -1,20 +1,21 @@
-from typing import Any, List
-from fastapi import APIRouter, Depends, HTTPException, status
-from sqlalchemy.orm import Session
 from datetime import datetime
 from decimal import Decimal
+from typing import Any
 
-from app.core.database import get_db
-from app.models.sales import SalesOrder, SalesOrderItem, OrderStatus, PaymentStatus
-from app.models.product import Product
-from app.models.inventory import InventoryLot
-from app.models.user import User
+from fastapi import APIRouter, Depends, HTTPException, status
+from sqlalchemy.orm import Session
+
 from app.api.deps import get_current_user
+from app.core.database import get_db
+from app.models.inventory import InventoryLot
+from app.models.product import Product
+from app.models.sales import OrderStatus, PaymentStatus, SalesOrder, SalesOrderItem
+from app.models.user import User
 from app.schemas.sales import (
-    SalesOrderCreate,
-    SalesOrderResponse,
     SalesOrderComplete,
+    SalesOrderCreate,
     SalesOrderList,
+    SalesOrderResponse,
 )
 
 router = APIRouter()
@@ -159,7 +160,10 @@ def create_sales_order(
             if lot.quantity_available < item_data.quantity:
                 raise HTTPException(
                     status_code=status.HTTP_400_BAD_REQUEST,
-                    detail=f"Insufficient inventory for product {product.name_th}. Available: {lot.quantity_available}",
+                    detail=(
+                        f"Insufficient inventory for product {product.name_th}. "
+                        f"Available: {lot.quantity_available}"
+                    ),
                 )
 
             item = SalesOrderItem(
@@ -224,12 +228,7 @@ def complete_sales_order(
     """
     try:
         # Get order with lock to prevent concurrent completion attempts
-        order = (
-            db.query(SalesOrder)
-            .filter(SalesOrder.id == order_id)
-            .with_for_update()
-            .first()
-        )
+        order = db.query(SalesOrder).filter(SalesOrder.id == order_id).with_for_update().first()
         if not order:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
 
@@ -242,7 +241,10 @@ def complete_sales_order(
         if payment_data.paid_amount < Decimal(str(order.total_amount)):
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Insufficient payment. Total: {order.total_amount}, Paid: {payment_data.paid_amount}",
+                detail=(
+                    f"Insufficient payment. Total: {order.total_amount}, "
+                    f"Paid: {payment_data.paid_amount}"
+                ),
             )
 
         # Update order

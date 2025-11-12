@@ -1,14 +1,15 @@
 from fastapi import APIRouter
+
 from app.api.v1.endpoints import (
     auth,
-    products,
+    categories,
+    customers,
     inventory,
-    sales,
+    products,
     purchase,
     reports,
-    categories,
+    sales,
     suppliers,
-    customers,
     users,
 )
 

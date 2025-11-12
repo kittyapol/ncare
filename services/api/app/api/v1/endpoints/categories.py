@@ -1,11 +1,13 @@
 """
 Categories API endpoints
 """
-from typing import Any, List
+
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException
 from sqlalchemy.orm import Session
 
-from app.api.deps import get_db, get_current_active_user, get_manager_or_admin
+from app.api.deps import get_current_active_user, get_db, get_manager_or_admin
 from app.models.product import Category
 from app.models.user import User
 
@@ -20,9 +22,7 @@ def get_categories(
     current_user: User = Depends(get_current_active_user),
 ) -> Any:
     """Get all categories"""
-    categories = (
-        db.query(Category).filter(Category.is_active == True).offset(skip).limit(limit).all()
-    )
+    categories = db.query(Category).filter(Category.is_active).offset(skip).limit(limit).all()
     return {"items": categories, "total": len(categories)}
 
 

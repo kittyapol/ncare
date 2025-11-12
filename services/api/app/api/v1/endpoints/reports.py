@@ -1,18 +1,19 @@
-from typing import Any, List, Dict
+from datetime import date, datetime, timedelta
+from typing import Any
+
 from fastapi import APIRouter, Depends, Query
 from fastapi.responses import StreamingResponse
+from sqlalchemy import and_, func
 from sqlalchemy.orm import Session
-from sqlalchemy import func, and_
-from datetime import datetime, timedelta, date
 
+from app.api.v1.endpoints.auth import get_current_user
 from app.core.database import get_db
-from app.models.sales import SalesOrder, SalesOrderItem, OrderStatus
 from app.models.inventory import InventoryLot
 from app.models.product import Product
-from app.models.purchase import PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus
+from app.models.purchase import PurchaseOrder, PurchaseOrderStatus
+from app.models.sales import OrderStatus, SalesOrder, SalesOrderItem
 from app.models.user import User
-from app.api.v1.endpoints.auth import get_current_user
-from app.services.export_service import PDFExportService, ExcelExportService
+from app.services.export_service import ExcelExportService, PDFExportService
 
 router = APIRouter()
 
@@ -35,7 +36,7 @@ def get_dashboard_summary(
     )
 
     # Total products
-    total_products = db.query(Product).filter(Product.is_active == True).count()
+    total_products = db.query(Product).filter(Product.is_active).count()
 
     # Low stock items
     low_stock = (
@@ -143,6 +144,7 @@ def get_expiry_report(
 # VAT Reports (ภาษีซื้อ/ภาษีขาย)
 # ============================================
 
+
 @router.get("/vat-purchases")
 def get_vat_purchases_report(
     start_date: date = Query(..., description="Start date for report"),
@@ -161,10 +163,9 @@ def get_vat_purchases_report(
             and_(
                 PurchaseOrder.actual_delivery_date >= start_date,
                 PurchaseOrder.actual_delivery_date <= end_date,
-                PurchaseOrder.status.in_([
-                    PurchaseOrderStatus.PARTIALLY_RECEIVED,
-                    PurchaseOrderStatus.RECEIVED
-                ])
+                PurchaseOrder.status.in_(
+                    [PurchaseOrderStatus.PARTIALLY_RECEIVED, PurchaseOrderStatus.RECEIVED]
+                ),
             )
         )
         .all()
@@ -183,8 +184,8 @@ def get_vat_purchases_report(
     for po in purchases:
         for item in po.items:
             # คำนวณ VAT ตาม item
-            vat_rate = float(item.vat_rate) if hasattr(item, 'vat_rate') else 7.0
-            is_vat_included = getattr(item, 'is_vat_included', True)
+            vat_rate = float(item.vat_rate) if hasattr(item, "vat_rate") else 7.0
+            is_vat_included = getattr(item, "is_vat_included", True)
 
             # ถ้ารวม VAT แล้ว คำนวณแยกออก
             if is_vat_included and vat_rate > 0:
@@ -213,20 +214,22 @@ def get_vat_purchases_report(
             total_vat_amount += line_vat
             total_including_vat += line_total
 
-            purchase_details.append({
-                "po_number": po.po_number,
-                "date": po.actual_delivery_date,
-                "supplier_id": str(po.supplier_id),
-                "product_id": str(item.product_id),
-                "quantity": item.quantity_received,
-                "unit_price": float(item.unit_price),
-                "vat_rate": vat_rate,
-                "price_before_vat": price_before,
-                "vat_amount": vat_amount,
-                "line_before_vat": line_before_vat,
-                "line_vat": line_vat,
-                "line_total": line_total,
-            })
+            purchase_details.append(
+                {
+                    "po_number": po.po_number,
+                    "date": po.actual_delivery_date,
+                    "supplier_id": str(po.supplier_id),
+                    "product_id": str(item.product_id),
+                    "quantity": item.quantity_received,
+                    "unit_price": float(item.unit_price),
+                    "vat_rate": vat_rate,
+                    "price_before_vat": price_before,
+                    "vat_amount": vat_amount,
+                    "line_before_vat": line_before_vat,
+                    "line_vat": line_vat,
+                    "line_total": line_total,
+                }
+            )
 
     return {
         "report_type": "vat_purchases",
@@ -240,7 +243,7 @@ def get_vat_purchases_report(
                 "vat_7_percent": round(total_vat_7, 2),
                 "vat_0_percent": round(total_vat_0, 2),
                 "vat_exempt": round(total_exempt, 2),
-            }
+            },
         },
         "details": purchase_details,
         "total_transactions": len(purchase_details),
@@ -265,7 +268,7 @@ def get_vat_sales_report(
             and_(
                 SalesOrder.order_date >= start_date,
                 SalesOrder.order_date <= end_date,
-                SalesOrder.status == OrderStatus.COMPLETED
+                SalesOrder.status == OrderStatus.COMPLETED,
             )
         )
         .all()
@@ -299,17 +302,19 @@ def get_vat_sales_report(
             elif price_before > 0:
                 total_vat_0 += price_before
 
-            sales_details.append({
-                "order_number": order.order_number,
-                "order_date": order.order_date,
-                "customer_id": str(order.customer_id) if order.customer_id else None,
-                "product_id": str(item.product_id),
-                "quantity": item.quantity,
-                "unit_price": float(item.unit_price),
-                "price_before_vat": price_before,
-                "vat_amount": vat_amount,
-                "price_including_vat": price_including,
-            })
+            sales_details.append(
+                {
+                    "order_number": order.order_number,
+                    "order_date": order.order_date,
+                    "customer_id": str(order.customer_id) if order.customer_id else None,
+                    "product_id": str(item.product_id),
+                    "quantity": item.quantity,
+                    "unit_price": float(item.unit_price),
+                    "price_before_vat": price_before,
+                    "vat_amount": vat_amount,
+                    "price_including_vat": price_including,
+                }
+            )
 
     return {
         "report_type": "vat_sales",
@@ -323,7 +328,7 @@ def get_vat_sales_report(
                 "vat_7_percent": round(total_vat_7, 2),
                 "vat_0_percent": round(total_vat_0, 2),
                 "vat_exempt": round(total_exempt, 2),
-            }
+            },
         },
         "details": sales_details,
         "total_transactions": len(sales_details),
@@ -333,6 +338,7 @@ def get_vat_sales_report(
 # ============================================
 # COGS Report (ต้นทุนขาย)
 # ============================================
+
 
 @router.get("/cogs-report")
 def get_cogs_report(
@@ -353,7 +359,7 @@ def get_cogs_report(
             SalesOrder.order_date,
             InventoryLot.unit_cost,
             Product.name_th,
-            Product.sku
+            Product.sku,
         )
         .join(SalesOrder, SalesOrderItem.sales_order_id == SalesOrder.id)
         .join(InventoryLot, SalesOrderItem.lot_id == InventoryLot.id)
@@ -362,7 +368,7 @@ def get_cogs_report(
             and_(
                 SalesOrder.order_date >= start_date,
                 SalesOrder.order_date <= end_date,
-                SalesOrder.status == OrderStatus.COMPLETED
+                SalesOrder.status == OrderStatus.COMPLETED,
             )
         )
         .all()
@@ -384,18 +390,22 @@ def get_cogs_report(
         total_revenue += item_revenue
         total_quantity += item.quantity
 
-        cogs_details.append({
-            "order_number": order_number,
-            "order_date": order_date,
-            "product_name": product_name,
-            "sku": sku,
-            "quantity": item.quantity,
-            "unit_cost": float(unit_cost),
-            "total_cost": round(item_cogs, 2),
-            "revenue": round(item_revenue, 2),
-            "profit": round(item_profit, 2),
-            "profit_margin_percent": round((item_profit / item_revenue * 100) if item_revenue > 0 else 0, 2),
-        })
+        cogs_details.append(
+            {
+                "order_number": order_number,
+                "order_date": order_date,
+                "product_name": product_name,
+                "sku": sku,
+                "quantity": item.quantity,
+                "unit_cost": float(unit_cost),
+                "total_cost": round(item_cogs, 2),
+                "revenue": round(item_revenue, 2),
+                "profit": round(item_profit, 2),
+                "profit_margin_percent": round(
+                    (item_profit / item_revenue * 100) if item_revenue > 0 else 0, 2
+                ),
+            }
+        )
 
     gross_profit = total_revenue - total_cogs
     gross_margin = (gross_profit / total_revenue * 100) if total_revenue > 0 else 0
@@ -410,7 +420,9 @@ def get_cogs_report(
             "gross_profit": round(gross_profit, 2),
             "gross_margin_percent": round(gross_margin, 2),
             "total_quantity_sold": total_quantity,
-            "average_cost_per_unit": round(total_cogs / total_quantity, 2) if total_quantity > 0 else 0,
+            "average_cost_per_unit": (
+                round(total_cogs / total_quantity, 2) if total_quantity > 0 else 0
+            ),
         },
         "details": cogs_details,
         "total_transactions": len(cogs_details),
@@ -420,6 +432,7 @@ def get_cogs_report(
 # ============================================
 # Profit & Loss Report (กำไร-ขาดทุน)
 # ============================================
+
 
 @router.get("/profit-loss")
 def get_profit_loss_report(
@@ -439,26 +452,24 @@ def get_profit_loss_report(
             and_(
                 SalesOrder.order_date >= start_date,
                 SalesOrder.order_date <= end_date,
-                SalesOrder.status == OrderStatus.COMPLETED
+                SalesOrder.status == OrderStatus.COMPLETED,
             )
         )
-        .scalar() or 0
+        .scalar()
+        or 0
     )
     total_revenue = float(sales)
 
     # 2. Calculate COGS (ต้นทุนขาย)
     cogs_items = (
-        db.query(
-            SalesOrderItem.quantity,
-            InventoryLot.unit_cost
-        )
+        db.query(SalesOrderItem.quantity, InventoryLot.unit_cost)
         .join(SalesOrder, SalesOrderItem.sales_order_id == SalesOrder.id)
         .join(InventoryLot, SalesOrderItem.lot_id == InventoryLot.id)
         .filter(
             and_(
                 SalesOrder.order_date >= start_date,
                 SalesOrder.order_date <= end_date,
-                SalesOrder.status == OrderStatus.COMPLETED
+                SalesOrder.status == OrderStatus.COMPLETED,
             )
         )
         .all()
@@ -477,10 +488,11 @@ def get_profit_loss_report(
             and_(
                 SalesOrder.order_date >= start_date,
                 SalesOrder.order_date <= end_date,
-                SalesOrder.status == OrderStatus.COMPLETED
+                SalesOrder.status == OrderStatus.COMPLETED,
             )
         )
-        .scalar() or 0
+        .scalar()
+        or 0
     )
     output_vat = float(vat_sales)
 
@@ -509,20 +521,21 @@ def get_profit_loss_report(
                 "output_vat": round(output_vat, 2),
                 "input_vat_estimate": round(input_vat_estimate, 2),
                 "net_vat_payable": round(output_vat - input_vat_estimate, 2),
-            }
+            },
         },
         "summary": {
             "total_revenue": round(total_revenue, 2),
             "total_cogs": round(total_cogs, 2),
             "gross_profit": round(gross_profit, 2),
             "gross_margin_percent": round(gross_margin, 2),
-        }
+        },
     }
 
 
 # ============================================
 # PDF/Excel Export Endpoints
 # ============================================
+
 
 @router.get("/profit-loss/export-pdf")
 def export_profit_loss_pdf(
@@ -543,7 +556,7 @@ def export_profit_loss_pdf(
     return StreamingResponse(
         pdf_buffer,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 
@@ -566,7 +579,7 @@ def export_profit_loss_excel(
     return StreamingResponse(
         excel_buffer,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 
@@ -589,7 +602,7 @@ def export_vat_sales_pdf(
     return StreamingResponse(
         pdf_buffer,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 
@@ -612,7 +625,7 @@ def export_vat_sales_excel(
     return StreamingResponse(
         excel_buffer,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 
@@ -635,7 +648,7 @@ def export_vat_purchases_pdf(
     return StreamingResponse(
         pdf_buffer,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 
@@ -658,7 +671,7 @@ def export_vat_purchases_excel(
     return StreamingResponse(
         excel_buffer,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 
@@ -681,7 +694,7 @@ def export_cogs_pdf(
     return StreamingResponse(
         pdf_buffer,
         media_type="application/pdf",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )
 
 
@@ -704,5 +717,5 @@ def export_cogs_excel(
     return StreamingResponse(
         excel_buffer,
         media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
-        headers={"Content-Disposition": f"attachment; filename={filename}"}
+        headers={"Content-Disposition": f"attachment; filename={filename}"},
     )

@@ -1,17 +1,18 @@
-from typing import Any, List
+from datetime import datetime, timedelta
+from typing import Any
+
 from fastapi import APIRouter, Depends, HTTPException, Query
 from sqlalchemy.orm import Session
-from datetime import datetime, timedelta
 
+from app.api.v1.endpoints.auth import get_current_user
 from app.core.database import get_db
 from app.models.inventory import InventoryLot
 from app.models.user import User
-from app.api.v1.endpoints.auth import get_current_user
 from app.schemas.inventory import (
-    InventoryLotList,
-    InventoryLotResponse,
     ExpiringLotsResponse,
     InventoryAdjustmentResponse,
+    InventoryLotList,
+    InventoryLotResponse,
 )
 
 router = APIRouter()
@@ -87,6 +88,4 @@ def adjust_inventory(
     lot.quantity_available = new_quantity
     db.commit()
 
-    return InventoryAdjustmentResponse(
-        message="Inventory adjusted", new_quantity=new_quantity
-    )
+    return InventoryAdjustmentResponse(message="Inventory adjusted", new_quantity=new_quantity)

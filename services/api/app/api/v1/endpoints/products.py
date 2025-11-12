@@ -1,13 +1,14 @@
 from typing import Any, List, Optional
-from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
-from sqlalchemy import or_
 
+from fastapi import APIRouter, Depends, HTTPException, Query
+from sqlalchemy import or_
+from sqlalchemy.orm import Session
+
+from app.api.v1.endpoints.auth import get_current_user
 from app.core.database import get_db
 from app.models.product import Product
 from app.models.user import User
-from app.api.v1.endpoints.auth import get_current_user
-from app.schemas.product import ProductCreate, ProductUpdate, ProductResponse, ProductList
+from app.schemas.product import ProductCreate, ProductList, ProductResponse, ProductUpdate
 
 router = APIRouter()
 
@@ -66,7 +67,7 @@ def search_products(
     products = (
         db.query(Product)
         .filter(
-            Product.is_active == True,
+            Product.is_active,
             or_(
                 Product.name_th.ilike(f"%{q}%"),
                 Product.name_en.ilike(f"%{q}%"),
