@@ -59,128 +59,155 @@ def create_sales_order(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Any:
-    """Create new sales order with VAT calculation"""
-    # Generate order number
-    order_number = f"SO-{datetime.now().strftime('%Y%m%d%H%M%S')}"
+    """Create new sales order with VAT calculation
 
-    # Create order
-    order = SalesOrder(
-        order_number=order_number,
-        customer_id=order_data.customer_id,
-        prescription_number=order_data.prescription_number,
-        cashier_id=str(current_user.id),
-        discount_amount=float(order_data.discount_amount),
-        subtotal=0,
-        tax_amount=0,
-        total_amount=0,
-        status=OrderStatus.DRAFT,
-        payment_status=PaymentStatus.PENDING,
-        paid_amount=0,
-        change_amount=0,
-        notes=order_data.notes,
-    )
+    This endpoint implements row-level locking (SELECT FOR UPDATE) to prevent
+    race conditions when multiple orders are created simultaneously for the same
+    inventory lots.
+    """
+    try:
+        # Generate order number
+        order_number = f"SO-{datetime.now().strftime('%Y%m%d%H%M%S')}"
 
-    # Calculate totals with VAT
-    subtotal = Decimal("0")
-    total_vat = Decimal("0")
-    items = []
+        # Create order
+        order = SalesOrder(
+            order_number=order_number,
+            customer_id=order_data.customer_id,
+            prescription_number=order_data.prescription_number,
+            cashier_id=str(current_user.id),
+            discount_amount=float(order_data.discount_amount),
+            subtotal=0,
+            tax_amount=0,
+            total_amount=0,
+            status=OrderStatus.DRAFT,
+            payment_status=PaymentStatus.PENDING,
+            paid_amount=0,
+            change_amount=0,
+            notes=order_data.notes,
+        )
 
-    for item_data in order_data.items:
-        # Get product
-        product = db.query(Product).filter(Product.id == item_data.product_id).first()
-        if not product:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail=f"Product {item_data.product_id} not found",
-            )
+        # Calculate totals with VAT
+        subtotal = Decimal("0")
+        total_vat = Decimal("0")
+        items = []
 
-        # Use provided price or get from product
-        unit_price = item_data.unit_price if item_data.unit_price else product.selling_price
-
-        # Calculate line total before discount
-        line_total_before_discount = Decimal(str(unit_price)) * item_data.quantity
-        discount = Decimal(str(item_data.discount_amount))
-        line_total = line_total_before_discount - discount
-
-        # Calculate VAT for this item
-        # Note: In this system, unit prices are BEFORE VAT, and we ADD VAT on top
-        if product.is_vat_applicable:
-            vat_rate = product.vat_rate / Decimal("100")
-            price_before_vat = line_total
-            vat_amount = line_total * vat_rate
-            price_including_vat = line_total + vat_amount
-        else:
-            price_before_vat = line_total
-            vat_amount = Decimal("0")
-            price_including_vat = line_total
-
-        subtotal += price_before_vat
-        total_vat += vat_amount
-
-        # Validate inventory if lot_id provided
-        lot = None
-        if item_data.lot_id:
-            lot = db.query(InventoryLot).filter(InventoryLot.id == item_data.lot_id).first()
-            if not lot:
+        for item_data in order_data.items:
+            # Get product
+            product = db.query(Product).filter(Product.id == item_data.product_id).first()
+            if not product:
                 raise HTTPException(
                     status_code=status.HTTP_404_NOT_FOUND,
-                    detail=f"Lot {item_data.lot_id} not found",
+                    detail=f"Product {item_data.product_id} not found",
                 )
-        else:
-            # Find available lot
-            lot = (
-                db.query(InventoryLot)
-                .filter(InventoryLot.product_id == item_data.product_id)
-                .filter(InventoryLot.quantity_available >= item_data.quantity)
-                .first()
-            )
 
-        if not lot:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Insufficient inventory for product {product.name_th}",
-            )
+            # Use provided price or get from product
+            unit_price = item_data.unit_price if item_data.unit_price else product.selling_price
 
-        if lot.quantity_available < item_data.quantity:
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Insufficient inventory for product {product.name_th}. Available: {lot.quantity_available}",
-            )
+            # Calculate line total before discount
+            line_total_before_discount = Decimal(str(unit_price)) * item_data.quantity
+            discount = Decimal(str(item_data.discount_amount))
+            line_total = line_total_before_discount - discount
 
-        item = SalesOrderItem(
-            product_id=item_data.product_id,
-            lot_id=str(lot.id),
-            quantity=item_data.quantity,
-            unit_price=float(unit_price),
-            discount_amount=float(discount),
-            line_total=float(price_including_vat),  # Store final price with VAT
-            vat_amount=float(vat_amount),
-            price_before_vat=float(price_before_vat),
-            price_including_vat=float(price_including_vat),
+            # Calculate VAT for this item
+            # Note: In this system, unit prices are BEFORE VAT, and we ADD VAT on top
+            if product.is_vat_applicable:
+                vat_rate = product.vat_rate / Decimal("100")
+                price_before_vat = line_total
+                vat_amount = line_total * vat_rate
+                price_including_vat = line_total + vat_amount
+            else:
+                price_before_vat = line_total
+                vat_amount = Decimal("0")
+                price_including_vat = line_total
+
+            subtotal += price_before_vat
+            total_vat += vat_amount
+
+            # Validate inventory if lot_id provided
+            # CRITICAL: Use with_for_update() to lock the row and prevent race conditions
+            lot = None
+            if item_data.lot_id:
+                lot = (
+                    db.query(InventoryLot)
+                    .filter(InventoryLot.id == item_data.lot_id)
+                    .with_for_update()  # Row-level lock to prevent concurrent modifications
+                    .first()
+                )
+                if not lot:
+                    raise HTTPException(
+                        status_code=status.HTTP_404_NOT_FOUND,
+                        detail=f"Lot {item_data.lot_id} not found",
+                    )
+            else:
+                # Find available lot with row-level lock
+                # This ensures that concurrent orders don't oversell the same lot
+                lot = (
+                    db.query(InventoryLot)
+                    .filter(InventoryLot.product_id == item_data.product_id)
+                    .filter(InventoryLot.quantity_available >= item_data.quantity)
+                    .with_for_update()  # Row-level lock to prevent concurrent modifications
+                    .first()
+                )
+
+            if not lot:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Insufficient inventory for product {product.name_th}",
+                )
+
+            # Re-check quantity after acquiring lock (another transaction might have modified it)
+            if lot.quantity_available < item_data.quantity:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail=f"Insufficient inventory for product {product.name_th}. Available: {lot.quantity_available}",
+                )
+
+            item = SalesOrderItem(
+                product_id=item_data.product_id,
+                lot_id=str(lot.id),
+                quantity=item_data.quantity,
+                unit_price=float(unit_price),
+                discount_amount=float(discount),
+                line_total=float(price_including_vat),  # Store final price with VAT
+                vat_amount=float(vat_amount),
+                price_before_vat=float(price_before_vat),
+                price_including_vat=float(price_including_vat),
+            )
+            items.append(item)
+
+            # Reserve inventory - now safe because we have a lock
+            lot.quantity_reserved += item_data.quantity
+            lot.quantity_available -= item_data.quantity
+
+        # Set order totals
+        order.subtotal = float(subtotal)
+        order.tax_amount = float(total_vat)
+        order.total_amount = float(subtotal + total_vat - Decimal(str(order.discount_amount)))
+
+        db.add(order)
+        db.flush()
+
+        # Add items
+        for item in items:
+            item.sales_order_id = str(order.id)
+            db.add(item)
+
+        db.commit()
+        db.refresh(order)
+
+        return order
+
+    except HTTPException:
+        # Re-raise HTTP exceptions (business logic errors)
+        db.rollback()
+        raise
+    except Exception as e:
+        # Rollback on any unexpected error
+        db.rollback()
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to create sales order: {str(e)}",
         )
-        items.append(item)
-
-        # Reserve inventory
-        lot.quantity_reserved += item_data.quantity
-        lot.quantity_available -= item_data.quantity
-
-    # Set order totals
-    order.subtotal = float(subtotal)
-    order.tax_amount = float(total_vat)
-    order.total_amount = float(subtotal + total_vat - Decimal(str(order.discount_amount)))
-
-    db.add(order)
-    db.flush()
-
-    # Add items
-    for item in items:
-        item.sales_order_id = str(order.id)
-        db.add(item)
-
-    db.commit()
-    db.refresh(order)
-
-    return order
 
 
 @router.post("/orders/{order_id}/complete", response_model=SalesOrderResponse)
@@ -190,42 +217,70 @@ def complete_sales_order(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Any:
-    """Complete sales order and process payment"""
-    order = db.query(SalesOrder).filter(SalesOrder.id == order_id).first()
-    if not order:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+    """Complete sales order and process payment
 
-    if order.status == OrderStatus.COMPLETED:
-        raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST, detail="Order already completed"
+    This endpoint implements proper transaction handling and row-level locking
+    to ensure data integrity when completing orders.
+    """
+    try:
+        # Get order with lock to prevent concurrent completion attempts
+        order = (
+            db.query(SalesOrder)
+            .filter(SalesOrder.id == order_id)
+            .with_for_update()
+            .first()
         )
+        if not order:
+            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
 
-    # Validate payment amount
-    if payment_data.paid_amount < Decimal(str(order.total_amount)):
+        if order.status == OrderStatus.COMPLETED:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST, detail="Order already completed"
+            )
+
+        # Validate payment amount
+        if payment_data.paid_amount < Decimal(str(order.total_amount)):
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Insufficient payment. Total: {order.total_amount}, Paid: {payment_data.paid_amount}",
+            )
+
+        # Update order
+        order.payment_method = payment_data.payment_method
+        order.paid_amount = float(payment_data.paid_amount)
+        order.change_amount = float(payment_data.paid_amount) - float(order.total_amount)
+        order.payment_status = PaymentStatus.PAID
+        order.status = OrderStatus.COMPLETED
+        order.completed_at = datetime.now()
+
+        if payment_data.pharmacist_id:
+            order.pharmacist_id = payment_data.pharmacist_id
+
+        # Deduct inventory (move from reserved to sold) with row-level locking
+        for item in order.items:
+            lot = (
+                db.query(InventoryLot)
+                .filter(InventoryLot.id == item.lot_id)
+                .with_for_update()
+                .first()
+            )
+            if lot:
+                lot.quantity_reserved -= item.quantity
+                # quantity_available was already deducted when order was created
+
+        db.commit()
+        db.refresh(order)
+
+        return order
+
+    except HTTPException:
+        # Re-raise HTTP exceptions (business logic errors)
+        db.rollback()
+        raise
+    except Exception as e:
+        # Rollback on any unexpected error
+        db.rollback()
         raise HTTPException(
-            status_code=status.HTTP_400_BAD_REQUEST,
-            detail=f"Insufficient payment. Total: {order.total_amount}, Paid: {payment_data.paid_amount}",
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to complete sales order: {str(e)}",
         )
-
-    # Update order
-    order.payment_method = payment_data.payment_method
-    order.paid_amount = float(payment_data.paid_amount)
-    order.change_amount = float(payment_data.paid_amount) - float(order.total_amount)
-    order.payment_status = PaymentStatus.PAID
-    order.status = OrderStatus.COMPLETED
-    order.completed_at = datetime.now()
-
-    if payment_data.pharmacist_id:
-        order.pharmacist_id = payment_data.pharmacist_id
-
-    # Deduct inventory (move from reserved to sold)
-    for item in order.items:
-        lot = db.query(InventoryLot).filter(InventoryLot.id == item.lot_id).first()
-        if lot:
-            lot.quantity_reserved -= item.quantity
-            # quantity_available was already deducted when order was created
-
-    db.commit()
-    db.refresh(order)
-
-    return order

@@ -14,6 +14,9 @@ import InventoryLots from './pages/inventory/InventoryLots';
 import POSInterface from './pages/sales/POSInterface';
 import SalesOrders from './pages/sales/SalesOrders';
 import PurchaseOrders from './pages/purchase/PurchaseOrders';
+import SupplierList from './pages/suppliers/SupplierList';
+import CustomerList from './pages/customers/CustomerList';
+import UserList from './pages/users/UserList';
 import Reports from './pages/reports/Reports';
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
@@ -45,6 +48,9 @@ function App() {
           <Route path="/sales/pos" element={<POSInterface />} />
           <Route path="/sales/orders" element={<SalesOrders />} />
           <Route path="/purchase/orders" element={<PurchaseOrders />} />
+          <Route path="/purchase/suppliers" element={<SupplierList />} />
+          <Route path="/customers" element={<CustomerList />} />
+          <Route path="/settings/users" element={<UserList />} />
           <Route path="/reports" element={<Reports />} />
         </Route>
       </Routes>
