@@ -1,9 +1,10 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/services/api';
+import { Product } from '@/types';
 
 export interface CartItem {
   product_id: string;
-  product: any;
+  product: Product;
   quantity: number;
   unit_price: number;
   line_total: number;

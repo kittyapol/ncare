@@ -19,7 +19,7 @@ export default function CustomerList() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['customers', statusFilter, tierFilter, searchQuery, currentPage],
     queryFn: async () => {
-      const params: any = {
+      const params: Record<string, string | number | boolean> = {
         skip: currentPage * pageSize,
         limit: pageSize,
       };
@@ -49,8 +49,9 @@ export default function CustomerList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['customers'] });
     },
-    onError: (error: any) => {
-      alert(error.response?.data?.detail || 'เกิดข้อผิดพลาดในการลบลูกค้า');
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { detail?: string } } };
+      alert(err.response?.data?.detail || 'เกิดข้อผิดพลาดในการลบลูกค้า');
     },
   });
 

@@ -57,7 +57,14 @@ export default function InventoryLots() {
                 </tr>
               </thead>
               <tbody>
-                {data?.items?.map((lot: any) => (
+                {data?.items?.map((lot: {
+                  id: string;
+                  lot_number: string;
+                  quantity_available: number;
+                  quantity_reserved: number;
+                  expiry_date: string;
+                  quality_status: string;
+                }) => (
                   <tr key={lot.id} className="border-b border-gray-100 hover:bg-gray-50">
                     <td className="py-3 px-4 font-mono">{lot.lot_number}</td>
                     <td className="py-3 px-4 text-right">{lot.quantity_available}</td>

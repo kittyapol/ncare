@@ -90,15 +90,22 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       onSuccess?.();
     },
-    onError: (error: any) => {
-      alert(error.response?.data?.detail || 'เกิดข้อผิดพลาดในการสร้างผู้ใช้งาน');
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { detail?: string } } };
+      alert(err.response?.data?.detail || 'เกิดข้อผิดพลาดในการสร้างผู้ใช้งาน');
     },
   });
 
   // Update mutation
   const updateMutation = useMutation({
     mutationFn: async (data: UserFormData) => {
-      const payload: any = {
+      const payload: {
+        email: string;
+        full_name: string;
+        role: string;
+        phone: string | null;
+        is_active: boolean;
+      } = {
         email: data.email,
         full_name: data.full_name,
         role: data.role,
@@ -113,8 +120,9 @@ export default function UserForm({ user, onSuccess, onCancel }: UserFormProps) {
       queryClient.invalidateQueries({ queryKey: ['users'] });
       onSuccess?.();
     },
-    onError: (error: any) => {
-      alert(error.response?.data?.detail || 'เกิดข้อผิดพลาดในการแก้ไขผู้ใช้งาน');
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { detail?: string } } };
+      alert(err.response?.data?.detail || 'เกิดข้อผิดพลาดในการแก้ไขผู้ใช้งาน');
     },
   });
 

@@ -34,8 +34,9 @@ export default function Login() {
 
       login(access_token, refresh_token, userResponse.data);
       navigate('/');
-    } catch (err: any) {
-      setError(err.response?.data?.detail || 'Login failed');
+    } catch (err: unknown) {
+      const error = err as { response?: { data?: { detail?: string } } };
+      setError(error.response?.data?.detail || 'Login failed');
     } finally {
       setLoading(false);
     }

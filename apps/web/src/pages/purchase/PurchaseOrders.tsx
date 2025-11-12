@@ -17,7 +17,7 @@ export default function PurchaseOrders() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['purchase-orders', statusFilter, currentPage],
     queryFn: async () => {
-      const params: any = {
+      const params: Record<string, string | number> = {
         skip: currentPage * pageSize,
         limit: pageSize,
       };

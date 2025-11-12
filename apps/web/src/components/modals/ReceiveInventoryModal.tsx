@@ -101,8 +101,9 @@ export default function ReceiveInventoryModal({
       alert('รับของเข้าคลังสำเร็จ');
       onClose();
     },
-    onError: (error: any) => {
-      alert(error.response?.data?.detail || error.message || 'เกิดข้อผิดพลาดในการรับของเข้าคลัง');
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { detail?: string } }; message?: string };
+      alert(err.response?.data?.detail || err.message || 'เกิดข้อผิดพลาดในการรับของเข้าคลัง');
     },
   });
 
@@ -154,7 +155,7 @@ export default function ReceiveInventoryModal({
                   </label>
                   <select {...register('warehouse_id')} className="input w-full max-w-md">
                     <option value="">เลือกคลังสินค้า</option>
-                    {warehousesData?.items?.map((warehouse: any) => (
+                    {warehousesData?.items?.map((warehouse: { id: string; code: string; name: string }) => (
                       <option key={warehouse.id} value={warehouse.id}>
                         {warehouse.code} - {warehouse.name}
                       </option>

@@ -63,7 +63,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
           name: customer.name,
           national_id: customer.national_id || '',
           date_of_birth: customer.date_of_birth || '',
-          gender: (customer.gender as any) || '',
+          gender: (customer.gender as 'male' | 'female' | 'other' | '') || '',
           email: customer.email || '',
           phone: customer.phone || '',
           mobile: customer.mobile || '',
@@ -73,7 +73,7 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
           postal_code: customer.postal_code || '',
           loyalty_points: customer.loyalty_points || 0,
           member_since: customer.member_since || '',
-          membership_tier: (customer.membership_tier as any) || '',
+          membership_tier: (customer.membership_tier as 'bronze' | 'silver' | 'gold' | 'platinum' | '') || '',
           allergies: customer.allergies || '',
           chronic_conditions: customer.chronic_conditions || '',
           is_active: customer.is_active,
@@ -131,8 +131,9 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       onSuccess?.();
     },
-    onError: (error: any) => {
-      alert(error.response?.data?.detail || 'เกิดข้อผิดพลาดในการสร้างข้อมูลลูกค้า');
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { detail?: string } } };
+      alert(err.response?.data?.detail || 'เกิดข้อผิดพลาดในการสร้างข้อมูลลูกค้า');
     },
   });
 
@@ -165,8 +166,9 @@ export default function CustomerForm({ customer, onSuccess, onCancel }: Customer
       queryClient.invalidateQueries({ queryKey: ['customers'] });
       onSuccess?.();
     },
-    onError: (error: any) => {
-      alert(error.response?.data?.detail || 'เกิดข้อผิดพลาดในการแก้ไขข้อมูลลูกค้า');
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { detail?: string } } };
+      alert(err.response?.data?.detail || 'เกิดข้อผิดพลาดในการแก้ไขข้อมูลลูกค้า');
     },
   });
 

@@ -127,8 +127,9 @@ export default function PurchaseOrderForm({ purchaseOrder, onSuccess, onCancel }
       queryClient.invalidateQueries({ queryKey: ['purchase-orders'] });
       onSuccess?.();
     },
-    onError: (error: any) => {
-      alert(error.response?.data?.detail || 'เกิดข้อผิดพลาดในการสร้าง PO');
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { detail?: string } } };
+      alert(err.response?.data?.detail || 'เกิดข้อผิดพลาดในการสร้าง PO');
     },
   });
 
@@ -336,7 +337,7 @@ export default function PurchaseOrderForm({ purchaseOrder, onSuccess, onCancel }
         )}
 
         {errors.items && typeof errors.items === 'object' && !Array.isArray(errors.items) && (
-          <p className="text-red-500 text-sm mt-2">{(errors.items as any).message}</p>
+          <p className="text-red-500 text-sm mt-2">{(errors.items as { message?: string }).message}</p>
         )}
 
         {/* Totals */}

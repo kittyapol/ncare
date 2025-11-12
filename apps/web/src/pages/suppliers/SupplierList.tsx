@@ -17,7 +17,7 @@ export default function SupplierList() {
   const { data, isLoading, error } = useQuery({
     queryKey: ['suppliers', statusFilter, searchQuery, currentPage],
     queryFn: async () => {
-      const params: any = {
+      const params: Record<string, number | boolean> = {
         skip: currentPage * pageSize,
         limit: pageSize,
       };
@@ -37,8 +37,9 @@ export default function SupplierList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
     },
-    onError: (error: any) => {
-      alert(error.response?.data?.detail || 'เกิดข้อผิดพลาดในการลบผู้จัดจำหน่าย');
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { detail?: string } } };
+      alert(err.response?.data?.detail || 'เกิดข้อผิดพลาดในการลบผู้จัดจำหน่าย');
     },
   });
 

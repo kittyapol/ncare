@@ -46,7 +46,7 @@ declare module 'quagga' {
         start?: number
         end?: number
       }
-      decodedCodes?: any[]
+      decodedCodes?: Array<Record<string, unknown>>
       endInfo?: {
         error?: number
         code?: number
@@ -54,23 +54,23 @@ declare module 'quagga' {
         end?: number
       }
     }
-    line?: any[]
+    line?: Array<Record<string, unknown>>
     angle?: number
-    pattern?: any[]
+    pattern?: Array<Record<string, unknown>>
     box?: number[][]
   }
 
   export interface QuaggaStatic {
     init(
       config: QuaggaConfig,
-      callback?: (err: any) => void
+      callback?: (err: unknown) => void
     ): void
     start(): void
     stop(): void
     onDetected(callback: (data: QuaggaResult) => void): void
-    onProcessed(callback: (result: any) => void): void
+    onProcessed(callback: (result: QuaggaResult | null) => void): void
     offDetected(callback: (data: QuaggaResult) => void): void
-    offProcessed(callback: (result: any) => void): void
+    offProcessed(callback: (result: QuaggaResult | null) => void): void
     decodeSingle(
       config: QuaggaConfig,
       callback: (result: QuaggaResult) => void

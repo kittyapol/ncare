@@ -76,7 +76,7 @@ export default function SupplierForm({ supplier, onSuccess, onCancel }: Supplier
           credit_limit: supplier.credit_limit || '',
           discount_terms: supplier.discount_terms || '',
           is_active: supplier.is_active,
-          rating: (supplier.rating as any) || '',
+          rating: (supplier.rating as 'A' | 'B' | 'C' | 'D' | '') || '',
           notes: supplier.notes || '',
         }
       : {
@@ -134,8 +134,9 @@ export default function SupplierForm({ supplier, onSuccess, onCancel }: Supplier
       queryClient.invalidateQueries({ queryKey: ['suppliers'] });
       onSuccess?.();
     },
-    onError: (error: any) => {
-      alert(error.response?.data?.detail || 'เกิดข้อผิดพลาดในการสร้างผู้จัดจำหน่าย');
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { detail?: string } } };
+      alert(err.response?.data?.detail || 'เกิดข้อผิดพลาดในการสร้างผู้จัดจำหน่าย');
     },
   });
 
@@ -170,8 +171,9 @@ export default function SupplierForm({ supplier, onSuccess, onCancel }: Supplier
       queryClient.invalidateQueries({ queryKey: ['supplier', supplier!.id] });
       onSuccess?.();
     },
-    onError: (error: any) => {
-      alert(error.response?.data?.detail || 'เกิดข้อผิดพลาดในการแก้ไขผู้จัดจำหน่าย');
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { detail?: string } } };
+      alert(err.response?.data?.detail || 'เกิดข้อผิดพลาดในการแก้ไขผู้จัดจำหน่าย');
     },
   });
 

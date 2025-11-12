@@ -1,4 +1,4 @@
-import { useEffect, useRef, useState } from 'react';
+import { useEffect, useRef, useState, useCallback } from 'react';
 import Quagga from 'quagga';
 
 interface BarcodeScannerProps {
@@ -10,17 +10,12 @@ export default function BarcodeScanner({ onDetected, onClose }: BarcodeScannerPr
   const scannerRef = useRef<HTMLDivElement>(null);
   const [isScanning, setIsScanning] = useState(false);
 
-  useEffect(() => {
-    if (scannerRef.current) {
-      initScanner();
-    }
-
-    return () => {
-      stopScanner();
-    };
+  const stopScanner = useCallback(() => {
+    Quagga.stop();
+    setIsScanning(false);
   }, []);
 
-  const initScanner = () => {
+  const initScanner = useCallback(() => {
     Quagga.init(
       {
         inputStream: {
@@ -58,12 +53,17 @@ export default function BarcodeScanner({ onDetected, onClose }: BarcodeScannerPr
         stopScanner();
       }
     });
-  };
+  }, [onDetected, stopScanner]);
 
-  const stopScanner = () => {
-    Quagga.stop();
-    setIsScanning(false);
-  };
+  useEffect(() => {
+    if (scannerRef.current) {
+      initScanner();
+    }
+
+    return () => {
+      stopScanner();
+    };
+  }, [initScanner, stopScanner]);
 
   return (
     <div className="fixed inset-0 bg-black bg-opacity-75 z-50 flex items-center justify-center">

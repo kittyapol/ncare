@@ -50,8 +50,9 @@ export default function UserList() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['users'] });
     },
-    onError: (error: any) => {
-      alert(error.response?.data?.detail || 'เกิดข้อผิดพลาดในการปิดการใช้งานผู้ใช้');
+    onError: (error: unknown) => {
+      const err = error as { response?: { data?: { detail?: string } } };
+      alert(err.response?.data?.detail || 'เกิดข้อผิดพลาดในการปิดการใช้งานผู้ใช้');
     },
   });
 

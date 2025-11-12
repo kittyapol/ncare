@@ -4,7 +4,7 @@ import { useCartStore } from '@/stores/cartStore';
 import { useSearchProducts } from '@/hooks/useProducts';
 import BarcodeInput from '@/components/barcode/BarcodeInput';
 import ReceiptModal from '@/components/modals/ReceiptModal';
-import { SalesOrder } from '@/types';
+import { SalesOrder, Product } from '@/types';
 import api from '@/services/api';
 
 export default function POSInterface() {
@@ -31,7 +31,9 @@ export default function POSInterface() {
   const queryClient = useQueryClient();
 
   const createOrderMutation = useMutation({
-    mutationFn: async (orderData: any) => {
+    mutationFn: async (orderData: {
+      items: Array<{ product_id: string; quantity: number; unit_price: number }>;
+    }) => {
       const response = await api.post('/sales/orders/', orderData);
       return response.data;
     },
@@ -42,7 +44,10 @@ export default function POSInterface() {
   });
 
   const completeOrderMutation = useMutation({
-    mutationFn: async ({ orderId, data }: { orderId: string; data: any }) => {
+    mutationFn: async ({ orderId, data }: {
+      orderId: string;
+      data: { payment_method: string; paid_amount: number };
+    }) => {
       const response = await api.post(`/sales/orders/${orderId}/complete`, data);
       return response.data;
     },
@@ -57,7 +62,7 @@ export default function POSInterface() {
     },
   });
 
-  const handleAddProduct = (product: any) => {
+  const handleAddProduct = (product: Product) => {
     addItem({
       product_id: product.id,
       product: product,
@@ -105,8 +110,9 @@ export default function POSInterface() {
       // Show payment dialog
       setShowPayment(true);
       setPaidAmount(getTotal());
-    } catch (error: any) {
-      alert(error.response?.data?.detail || 'Error creating order');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { detail?: string } } };
+      alert(err.response?.data?.detail || 'Error creating order');
     }
   };
 
@@ -126,8 +132,9 @@ export default function POSInterface() {
           paid_amount: paidAmount,
         },
       });
-    } catch (error: any) {
-      alert(error.response?.data?.detail || 'Error completing payment');
+    } catch (error: unknown) {
+      const err = error as { response?: { data?: { detail?: string } } };
+      alert(err.response?.data?.detail || 'Error completing payment');
     }
   };
 
@@ -168,7 +175,7 @@ export default function POSInterface() {
             <div className="card">
               <h2 className="font-bold mb-3">Search Results</h2>
               <div className="space-y-2">
-                {searchResults.map((product: any) => (
+                {searchResults.map((product: Product) => (
                   <div
                     key={product.id}
                     className="flex justify-between items-center p-3 hover:bg-gray-50 rounded-lg cursor-pointer"
