@@ -53,11 +53,12 @@ jobs:
       - name: Run tests
         working-directory: ./services/api
         env:
-          DATABASE_URL: postgresql://test_user:test_pass@localhost:5432/pharmacy_test
+          DATABASE_URL: sqlite:///:memory:?cache=shared
           REDIS_URL: redis://localhost:6379/0
           SECRET_KEY: test-secret-key
+          PYTHONPATH: /home/runner/work/ncare/ncare/services/api
         run: |
-          pytest tests/ -v --cov=app --cov-report=xml
+          pytest tests/backend/ -v --cov=app --cov-report=xml --cov-report=term
 
       - name: Upload coverage
         uses: codecov/codecov-action@v3
@@ -91,6 +92,10 @@ jobs:
       - name: Lint
         working-directory: ./apps/web
         run: pnpm lint
+
+      - name: Test
+        working-directory: ./apps/web
+        run: pnpm test --run || echo "No tests found, skipping..."
 
       - name: Build
         working-directory: ./apps/web

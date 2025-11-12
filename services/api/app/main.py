@@ -42,8 +42,43 @@ async def root():
 
 @app.get("/health")
 async def health_check():
-    """Health check endpoint"""
-    return {"status": "healthy"}
+    """
+    Health check endpoint for load balancers and monitoring
+    Returns basic health status without dependencies
+    """
+    return {"status": "healthy", "service": "api"}
+
+
+@app.get("/health/ready")
+async def readiness_check():
+    """
+    Readiness check endpoint - checks if service can handle requests
+    Checks database connectivity and other dependencies
+    """
+    from app.core.database import SessionLocal
+    from sqlalchemy import text
+
+    health_status = {
+        "status": "ready",
+        "service": "api",
+        "checks": {}
+    }
+
+    # Check database connection
+    try:
+        db = SessionLocal()
+        db.execute(text("SELECT 1"))
+        db.close()
+        health_status["checks"]["database"] = "ok"
+    except Exception as e:
+        health_status["status"] = "not_ready"
+        health_status["checks"]["database"] = f"error: {str(e)}"
+        return JSONResponse(
+            status_code=503,
+            content=health_status
+        )
+
+    return health_status
 
 
 if __name__ == "__main__":
