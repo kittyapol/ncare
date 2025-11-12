@@ -55,6 +55,32 @@ def get_products(
     return {"items": products, "total": total, "skip": skip, "limit": limit}
 
 
+@router.get("/search", response_model=List[ProductResponse])
+def search_products(
+    q: str = Query(..., min_length=1),
+    limit: int = 20,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> Any:
+    """Quick search products by name, SKU, or barcode"""
+    products = (
+        db.query(Product)
+        .filter(
+            Product.is_active == True,
+            or_(
+                Product.name_th.ilike(f"%{q}%"),
+                Product.name_en.ilike(f"%{q}%"),
+                Product.sku.ilike(f"%{q}%"),
+                Product.barcode.ilike(f"%{q}%"),
+            ),
+        )
+        .limit(limit)
+        .all()
+    )
+
+    return products
+
+
 @router.post("/", response_model=ProductResponse, status_code=201)
 def create_product(
     product_in: ProductCreate,
@@ -131,29 +157,3 @@ def delete_product(
     db.commit()
 
     return {"message": "Product deleted successfully"}
-
-
-@router.get("/search", response_model=List[ProductResponse])
-def search_products(
-    q: str = Query(..., min_length=1),
-    limit: int = 20,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
-) -> Any:
-    """Quick search products"""
-    products = (
-        db.query(Product)
-        .filter(
-            Product.is_active == True,
-            or_(
-                Product.name_th.ilike(f"%{q}%"),
-                Product.name_en.ilike(f"%{q}%"),
-                Product.sku.ilike(f"%{q}%"),
-                Product.barcode.ilike(f"%{q}%"),
-            ),
-        )
-        .limit(limit)
-        .all()
-    )
-
-    return products
