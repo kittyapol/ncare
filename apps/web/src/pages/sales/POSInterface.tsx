@@ -93,7 +93,7 @@ export default function POSInterface() {
         })),
       };
 
-      const order = await createOrderMutation.mutateAsync(orderData);
+      await createOrderMutation.mutateAsync(orderData);
 
       // Show payment dialog
       setShowPayment(true);

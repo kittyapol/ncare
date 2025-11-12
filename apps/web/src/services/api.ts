@@ -44,7 +44,7 @@ api.interceptors.response.use(
 
         originalRequest.headers.Authorization = `Bearer ${access_token}`;
         return api(originalRequest);
-      } catch (err) {
+      } catch (err: unknown) {
         useAuthStore.getState().logout();
         window.location.href = '/login';
         return Promise.reject(err);

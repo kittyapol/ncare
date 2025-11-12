@@ -7,11 +7,17 @@ from app.core.database import get_db
 from app.models.inventory import InventoryLot
 from app.models.user import User
 from app.api.v1.endpoints.auth import get_current_user
+from app.schemas.inventory import (
+    InventoryLotList,
+    InventoryLotResponse,
+    ExpiringLotsResponse,
+    InventoryAdjustmentResponse,
+)
 
 router = APIRouter()
 
 
-@router.get("/")
+@router.get("/", response_model=InventoryLotList)
 def get_inventory_lots(
     skip: int = 0,
     limit: int = 100,
@@ -32,10 +38,12 @@ def get_inventory_lots(
     total = query.count()
     lots = query.offset(skip).limit(limit).all()
 
-    return {"items": lots, "total": total}
+    return InventoryLotList(
+        items=[InventoryLotResponse.model_validate(lot) for lot in lots], total=total
+    )
 
 
-@router.get("/expiring")
+@router.get("/expiring", response_model=ExpiringLotsResponse)
 def get_expiring_lots(
     days: int = Query(default=30, ge=1, le=365),
     db: Session = Depends(get_db),
@@ -53,10 +61,13 @@ def get_expiring_lots(
         .all()
     )
 
-    return {"items": lots, "expiring_in_days": days}
+    return ExpiringLotsResponse(
+        items=[InventoryLotResponse.model_validate(lot) for lot in lots],
+        expiring_in_days=days,
+    )
 
 
-@router.post("/adjust")
+@router.post("/adjust", response_model=InventoryAdjustmentResponse)
 def adjust_inventory(
     lot_id: str,
     quantity_change: int,
@@ -76,4 +87,6 @@ def adjust_inventory(
     lot.quantity_available = new_quantity
     db.commit()
 
-    return {"message": "Inventory adjusted", "new_quantity": new_quantity}
+    return InventoryAdjustmentResponse(
+        message="Inventory adjusted", new_quantity=new_quantity
+    )

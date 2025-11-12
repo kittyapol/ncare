@@ -8,11 +8,18 @@ from app.models.purchase import PurchaseOrder, PurchaseOrderItem, PurchaseOrderS
 from app.models.inventory import InventoryLot, QualityStatus
 from app.models.user import User
 from app.api.v1.endpoints.auth import get_current_user
+from app.schemas.purchase import (
+    PurchaseOrderList,
+    PurchaseOrderCreate,
+    PurchaseOrderResponse,
+    ReceivePurchaseOrderRequest,
+    ReceivePurchaseOrderResponse,
+)
 
 router = APIRouter()
 
 
-@router.get("/orders/")
+@router.get("/orders/", response_model=PurchaseOrderList)
 def get_purchase_orders(
     skip: int = 0,
     limit: int = 100,
@@ -29,12 +36,15 @@ def get_purchase_orders(
     total = query.count()
     orders = query.offset(skip).limit(limit).all()
 
-    return {"items": orders, "total": total}
+    return PurchaseOrderList(
+        items=[PurchaseOrderResponse.model_validate(order) for order in orders],
+        total=total,
+    )
 
 
-@router.post("/orders/")
+@router.post("/orders/", response_model=PurchaseOrderResponse)
 def create_purchase_order(
-    order_data: dict,
+    order_data: PurchaseOrderCreate,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Any:
@@ -45,9 +55,10 @@ def create_purchase_order(
     # Create order
     order = PurchaseOrder(
         po_number=po_number,
-        supplier_id=order_data["supplier_id"],
+        supplier_id=order_data.supplier_id,
         order_date=date.today(),
-        expected_delivery_date=order_data.get("expected_delivery_date"),
+        expected_delivery_date=order_data.expected_delivery_date,
+        notes=order_data.notes,
         created_by=current_user.id,
         status=PurchaseOrderStatus.DRAFT,
         subtotal=0,
@@ -58,14 +69,14 @@ def create_purchase_order(
     subtotal = 0
     items = []
 
-    for item_data in order_data.get("items", []):
-        line_total = item_data["quantity"] * item_data["unit_price"]
+    for item_data in order_data.items:
+        line_total = item_data.quantity * item_data.unit_price
         subtotal += line_total
 
         item = PurchaseOrderItem(
-            product_id=item_data["product_id"],
-            quantity_ordered=item_data["quantity"],
-            unit_price=item_data["unit_price"],
+            product_id=item_data.product_id,
+            quantity_ordered=item_data.quantity,
+            unit_price=item_data.unit_price,
             line_total=line_total,
         )
         items.append(item)
@@ -84,13 +95,13 @@ def create_purchase_order(
     db.commit()
     db.refresh(order)
 
-    return order
+    return PurchaseOrderResponse.model_validate(order)
 
 
-@router.post("/orders/{order_id}/receive")
+@router.post("/orders/{order_id}/receive", response_model=ReceivePurchaseOrderResponse)
 def receive_purchase_order(
     order_id: str,
-    receiving_data: dict,
+    receiving_data: ReceivePurchaseOrderRequest,
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Any:
@@ -100,16 +111,16 @@ def receive_purchase_order(
         raise HTTPException(status_code=404, detail="Purchase order not found")
 
     # Create inventory lots for received items
-    for item_data in receiving_data.get("items", []):
+    for item_data in receiving_data.items:
         lot = InventoryLot(
-            product_id=item_data["product_id"],
-            warehouse_id=receiving_data["warehouse_id"],
+            product_id=item_data.product_id,
+            warehouse_id=receiving_data.warehouse_id,
             supplier_id=order.supplier_id,
-            lot_number=item_data["lot_number"],
-            quantity_received=item_data["quantity"],
-            quantity_available=item_data["quantity"],
-            manufacture_date=item_data.get("manufacture_date"),
-            expiry_date=item_data["expiry_date"],
+            lot_number=item_data.lot_number,
+            quantity_received=item_data.quantity,
+            quantity_available=item_data.quantity,
+            manufacture_date=item_data.manufacture_date,
+            expiry_date=item_data.expiry_date,
             received_date=date.today(),
             quality_status=QualityStatus.PENDING,
         )
@@ -120,12 +131,12 @@ def receive_purchase_order(
             db.query(PurchaseOrderItem)
             .filter(
                 PurchaseOrderItem.purchase_order_id == order_id,
-                PurchaseOrderItem.product_id == item_data["product_id"],
+                PurchaseOrderItem.product_id == item_data.product_id,
             )
             .first()
         )
         if po_item:
-            po_item.quantity_received += item_data["quantity"]
+            po_item.quantity_received += item_data.quantity
 
     # Update order status
     order.status = PurchaseOrderStatus.RECEIVED
@@ -133,4 +144,6 @@ def receive_purchase_order(
 
     db.commit()
 
-    return {"message": "Purchase order received successfully"}
+    return ReceivePurchaseOrderResponse(
+        message="Purchase order received successfully"
+    )

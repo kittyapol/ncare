@@ -42,7 +42,7 @@ export default function BarcodeScanner({ onDetected, onClose }: BarcodeScannerPr
           ],
         },
       },
-      (err) => {
+      (err: Error | null) => {
         if (err) {
           console.error('Error initializing scanner:', err);
           return;
@@ -52,7 +52,7 @@ export default function BarcodeScanner({ onDetected, onClose }: BarcodeScannerPr
       }
     );
 
-    Quagga.onDetected((data) => {
+    Quagga.onDetected((data: { codeResult?: { code?: string } }) => {
       if (data.codeResult && data.codeResult.code) {
         onDetected(data.codeResult.code);
         stopScanner();
