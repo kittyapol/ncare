@@ -34,6 +34,17 @@ export interface Customer {
   updated_at?: string;
 }
 
+export interface Category {
+  id: string;
+  code: string;
+  name_th: string;
+  name_en?: string;
+  description?: string;
+  parent_id?: string;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface Product {
   id: string;
   sku: string;
