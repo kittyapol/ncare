@@ -105,12 +105,12 @@ def create_sales_order(
         line_total = line_total_before_discount - discount
 
         # Calculate VAT for this item
+        # Note: In this system, unit prices are BEFORE VAT, and we ADD VAT on top
         if product.is_vat_applicable:
             vat_rate = product.vat_rate / Decimal("100")
-            # If price includes VAT, extract it
-            price_before_vat = line_total / (Decimal("1") + vat_rate)
-            vat_amount = line_total - price_before_vat
-            price_including_vat = line_total
+            price_before_vat = line_total
+            vat_amount = line_total * vat_rate
+            price_including_vat = line_total + vat_amount
         else:
             price_before_vat = line_total
             vat_amount = Decimal("0")
@@ -155,7 +155,7 @@ def create_sales_order(
             quantity=item_data.quantity,
             unit_price=float(unit_price),
             discount_amount=float(discount),
-            line_total=float(line_total),
+            line_total=float(price_including_vat),  # Store final price with VAT
             vat_amount=float(vat_amount),
             price_before_vat=float(price_before_vat),
             price_including_vat=float(price_including_vat),
@@ -169,7 +169,7 @@ def create_sales_order(
     # Set order totals
     order.subtotal = float(subtotal)
     order.tax_amount = float(total_vat)
-    order.total_amount = float(subtotal + total_vat - order.discount_amount)
+    order.total_amount = float(subtotal + total_vat - Decimal(str(order.discount_amount)))
 
     db.add(order)
     db.flush()

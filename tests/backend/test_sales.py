@@ -8,7 +8,7 @@ from decimal import Decimal
 class TestSalesOrder:
     """Test sales order creation and processing"""
 
-    def test_create_sales_order_vat_items(self, client, auth_headers_admin, sample_product):
+    def test_create_sales_order_vat_items(self, client, auth_headers_admin, sample_product, sample_inventory_lot):
         """Test creating sales order with VAT items"""
         response = client.post(
             "/api/v1/sales/orders/",
@@ -30,10 +30,13 @@ class TestSalesOrder:
         expected_total = 200 * 1.07
         assert abs(float(data["total_amount"]) - expected_total) < 0.01
 
-    def test_create_sales_order_mixed_vat(self, client, auth_headers_admin, sample_product, sample_category, db_session):
+    def test_create_sales_order_mixed_vat(self, client, auth_headers_admin, sample_product, sample_inventory_lot, sample_category, sample_warehouse, db_session):
         """Test sales order with mixed VAT/Non-VAT items"""
         # Create non-VAT product
         from app.models.product import Product
+        from app.models.inventory import InventoryLot
+        from datetime import date, timedelta
+
         non_vat_product = Product(
             sku="NONVAT001",
             name_th="ยา Non-VAT",
@@ -46,6 +49,20 @@ class TestSalesOrder:
         db_session.add(non_vat_product)
         db_session.commit()
         db_session.refresh(non_vat_product)
+
+        # Create inventory lot for non-VAT product
+        non_vat_lot = InventoryLot(
+            lot_number="LOT002",
+            product_id=non_vat_product.id,
+            warehouse_id=sample_warehouse.id,
+            quantity_received=100,
+            quantity_available=100,
+            quantity_reserved=0,
+            received_date=date.today(),
+            expiry_date=date.today() + timedelta(days=365),
+        )
+        db_session.add(non_vat_lot)
+        db_session.commit()
 
         response = client.post(
             "/api/v1/sales/orders/",
@@ -73,7 +90,7 @@ class TestSalesOrder:
         expected_total = 107 + 100
         assert abs(float(data["total_amount"]) - expected_total) < 0.01
 
-    def test_complete_sales_order(self, client, auth_headers_admin, sample_product):
+    def test_complete_sales_order(self, client, auth_headers_admin, sample_product, sample_inventory_lot):
         """Test completing sales order with payment"""
         # Create order
         create_response = client.post(
@@ -102,13 +119,13 @@ class TestSalesOrder:
         )
         assert complete_response.status_code == 200
         data = complete_response.json()
-        assert "change" in data
+        assert "change_amount" in data
 
 
 class TestPOSWorkflow:
     """Test complete POS workflow"""
 
-    def test_full_pos_transaction(self, client, auth_headers_cashier, sample_product):
+    def test_full_pos_transaction(self, client, auth_headers_cashier, sample_product, sample_inventory_lot):
         """Test full POS transaction from search to payment"""
         # 1. Search product
         search_response = client.get(

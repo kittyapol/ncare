@@ -3,6 +3,8 @@ Pytest configuration and fixtures for backend tests
 """
 import pytest
 import uuid
+from datetime import date, timedelta
+from decimal import Decimal
 from sqlalchemy import create_engine, TypeDecorator, String
 from sqlalchemy.orm import sessionmaker
 from sqlalchemy.pool import StaticPool
@@ -284,6 +286,28 @@ def sample_warehouse(db_session):
     db_session.commit()
     db_session.refresh(warehouse)
     return warehouse
+
+
+@pytest.fixture
+def sample_inventory_lot(db_session, sample_product, sample_warehouse):
+    """Create sample inventory lot with available quantity"""
+    lot = InventoryLot(
+        lot_number="LOT001",
+        batch_number="BATCH001",
+        product_id=sample_product.id,
+        warehouse_id=sample_warehouse.id,
+        quantity_received=100,
+        quantity_available=100,
+        quantity_reserved=0,
+        quantity_damaged=0,
+        received_date=date.today(),
+        expiry_date=date.today() + timedelta(days=365),
+        manufacture_date=date.today() - timedelta(days=30),
+    )
+    db_session.add(lot)
+    db_session.commit()
+    db_session.refresh(lot)
+    return lot
 
 
 @pytest.fixture
