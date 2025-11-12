@@ -1,5 +1,6 @@
 from typing import Any, List, Dict
 from fastapi import APIRouter, Depends, Query
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 from sqlalchemy import func, and_
 from datetime import datetime, timedelta, date
@@ -11,6 +12,7 @@ from app.models.product import Product
 from app.models.purchase import PurchaseOrder, PurchaseOrderItem, PurchaseOrderStatus
 from app.models.user import User
 from app.api.v1.endpoints.auth import get_current_user
+from app.services.export_service import PDFExportService, ExcelExportService
 
 router = APIRouter()
 
@@ -517,3 +519,98 @@ def get_profit_loss_report(
         }
     }
 
+
+# ============================================
+# PDF/Excel Export Endpoints
+# ============================================
+
+@router.get("/profit-loss/export-pdf")
+def export_profit_loss_pdf(
+    start_date: date = Query(...),
+    end_date: date = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> StreamingResponse:
+    """Export Profit & Loss Statement as PDF"""
+    # Get report data
+    report_data = get_profit_loss_report(start_date, end_date, db, current_user)
+
+    # Generate PDF
+    pdf_buffer = PDFExportService.generate_profit_loss_pdf(report_data)
+
+    # Return as downloadable file
+    filename = f"profit_loss_{start_date}_{end_date}.pdf"
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@router.get("/profit-loss/export-excel")
+def export_profit_loss_excel(
+    start_date: date = Query(...),
+    end_date: date = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> StreamingResponse:
+    """Export Profit & Loss Statement as Excel"""
+    # Get report data
+    report_data = get_profit_loss_report(start_date, end_date, db, current_user)
+
+    # Generate Excel
+    excel_buffer = ExcelExportService.generate_profit_loss_excel(report_data)
+
+    # Return as downloadable file
+    filename = f"profit_loss_{start_date}_{end_date}.xlsx"
+    return StreamingResponse(
+        excel_buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@router.get("/vat-sales/export-pdf")
+def export_vat_sales_pdf(
+    start_date: date = Query(...),
+    end_date: date = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> StreamingResponse:
+    """Export VAT Sales Report as PDF"""
+    # Get report data
+    report_data = get_vat_sales_report(start_date, end_date, db, current_user)
+
+    # Generate PDF
+    pdf_buffer = PDFExportService.generate_vat_sales_pdf(report_data)
+
+    # Return as downloadable file
+    filename = f"vat_sales_{start_date}_{end_date}.pdf"
+    return StreamingResponse(
+        pdf_buffer,
+        media_type="application/pdf",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
+
+
+@router.get("/vat-sales/export-excel")
+def export_vat_sales_excel(
+    start_date: date = Query(...),
+    end_date: date = Query(...),
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> StreamingResponse:
+    """Export VAT Sales Report as Excel"""
+    # Get report data
+    report_data = get_vat_sales_report(start_date, end_date, db, current_user)
+
+    # Generate Excel
+    excel_buffer = ExcelExportService.generate_vat_sales_excel(report_data)
+
+    # Return as downloadable file
+    filename = f"vat_sales_{start_date}_{end_date}.xlsx"
+    return StreamingResponse(
+        excel_buffer,
+        media_type="application/vnd.openxmlformats-officedocument.spreadsheetml.sheet",
+        headers={"Content-Disposition": f"attachment; filename={filename}"}
+    )
