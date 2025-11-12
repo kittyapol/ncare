@@ -1,305 +1,305 @@
-# Pharmacy ERP System
+# 💊 NCare Pharmacy ERP System
 
-> Comprehensive Pharmaceutical Warehouse Management System
+[![CI Pipeline](https://github.com/kittyapol/ncare/actions/workflows/ci.yml/badge.svg)](https://github.com/kittyapol/ncare/actions/workflows/ci.yml)
+[![License: MIT](https://img.shields.io/badge/License-MIT-yellow.svg)](https://opensource.org/licenses/MIT)
+[![Python 3.11+](https://img.shields.io/badge/python-3.11+-blue.svg)](https://www.python.org/downloads/)
+[![Node 18+](https://img.shields.io/badge/node-18+-green.svg)](https://nodejs.org/)
 
-A modern, full-stack ERP system specifically designed for pharmaceutical businesses, featuring inventory management, point-of-sale, purchase orders, manufacturing (OEM), and comprehensive reporting.
+> **ระบบบริหารจัดการร้านขายยาแบบครบวงจร (Comprehensive Pharmaceutical ERP System)**
+> 
+> Professional pharmacy management system with Thai tax compliance, inventory tracking, and customer loyalty program.
 
-## Features
+## 🌟 Features
 
-### Core Modules
+### ✅ Core Modules (100% Complete)
 
-1. **Inventory Management** - Complete product catalog, lot tracking, expiry alerts
-2. **Sales & POS** - Modern point-of-sale interface, prescription management, receipt generation
-3. **Purchase Management** - Purchase orders, supplier management, receiving workflows
-4. **Manufacturing (OEM)** - Production orders, Bill of Materials, quality control
-5. **Accounting** - Financial tracking, invoicing, reports
-6. **CRM** - Customer management, loyalty programs
-7. **Barcode System** - Scanner integration, barcode generation
-8. **Reports & Analytics** - Business intelligence, dashboards, custom reports
-9. **User Management** - Role-based access control, audit logs
-10. **Mobile Support** - Responsive web design, mobile barcode scanning
+- **🛒 POS System** - Point of Sale with real-time inventory updates
+- **📋 Receipt Printing** - Thai VAT 7% compliant receipts
+- **📦 Inventory Management** - Product tracking with lot numbers and expiry dates (FEFO)
+- **👥 Customer Management** - CRM with loyalty program (Bronze, Silver, Gold, Platinum)
+- **🏢 Supplier Management** - Vendor management with ratings
+- **📝 Purchase Orders** - Complete procurement workflow with goods receiving
+- **📊 Dashboard Analytics** - Real-time business intelligence
+- **👤 User Management** - Role-based access control (Admin, Manager, Pharmacist, Staff, Cashier)
 
-## Tech Stack
+### 🔒 Security Features
 
-### Frontend
-- **Framework**: React 18 + TypeScript + Vite
-- **State Management**: Zustand + React Query
-- **UI**: Tailwind CSS + shadcn/ui
-- **Routing**: React Router v6
-- **Forms**: React Hook Form + Zod validation
-- **Charts**: Recharts
-- **Barcode**: Quagga2
+- ✅ JWT Authentication with refresh tokens
+- ✅ Role-based access control (RBAC)
+- ✅ Password hashing with bcrypt
+- ✅ SQL injection prevention
+- ✅ XSS protection
+- ✅ CORS configuration
+- ✅ Admin-only user management
 
-### Backend
-- **Framework**: FastAPI (Python 3.11+)
-- **ORM**: SQLAlchemy 2.0
-- **Database**: PostgreSQL 15
-- **Cache**: Redis
-- **Queue**: Celery
-- **Auth**: JWT + Supabase Auth
-- **Testing**: Pytest + HTTPx
+### 🌐 Thai Localization
 
-### Infrastructure
-- **Development**: Docker Compose
-- **Production**: AWS ECS Fargate, RDS Aurora, ElastiCache, S3, CloudFront
-- **IaC**: Terraform
-- **CI/CD**: GitHub Actions
-- **Monitoring**: CloudWatch + Sentry
+- ✅ Full Thai language support
+- ✅ Thai Baht (THB) currency formatting
+- ✅ VAT 7% tax compliance
+- ✅ Thai address format
+- ✅ Thai date/time formatting
 
-## Project Structure
+## 🏗️ Architecture
 
-```
-pharmacy-erp-system/
+\`\`\`
+ncare/
 ├── apps/
-│   └── web/                    # React frontend
+│   └── web/                 # React + TypeScript Frontend
+│       ├── src/
+│       │   ├── components/  # Reusable UI components
+│       │   ├── pages/       # Page components
+│       │   ├── services/    # API clients
+│       │   └── types/       # TypeScript definitions
+│       └── dist/            # Production build
+│
 ├── services/
-│   └── api/                    # FastAPI backend
-├── packages/
-│   ├── ui/                     # Shared UI components
-│   └── types/                  # Shared TypeScript types
+│   └── api/                 # FastAPI Backend
+│       ├── app/
+│       │   ├── api/         # API endpoints
+│       │   ├── models/      # SQLAlchemy models
+│       │   ├── schemas/     # Pydantic schemas
+│       │   └── core/        # Core functionality
+│       └── tests/           # Backend tests
+│
 ├── infrastructure/
-│   ├── terraform/              # AWS infrastructure
-│   └── docker/                 # Docker configurations
-├── .github/
-│   └── workflows/              # CI/CD pipelines
-├── docker-compose.yml          # Local development
-└── README.md
-```
+│   └── docker/              # Docker configurations
+│
+└── .github/
+    └── workflows/           # CI/CD pipelines
+\`\`\`
 
-## Quick Start
+## 🚀 Quick Start
 
 ### Prerequisites
 
-- Node.js 18+
-- Python 3.11+
-- Docker & Docker Compose
-- pnpm 8+
+- **Docker & Docker Compose** (recommended)
+- **Node.js 18+** and **pnpm 8+**
+- **Python 3.11+**
+- **PostgreSQL 15+**
+- **Redis 7+**
 
-### Installation
+### Option 1: Docker Compose (Recommended)
 
-1. **Clone the repository**
-```bash
-git clone https://github.com/your-org/pharmacy-erp-system.git
-cd pharmacy-erp-system
-```
+\`\`\`bash
+# Clone the repository
+git clone https://github.com/kittyapol/ncare.git
+cd ncare
 
-2. **Install dependencies**
-```bash
-# Install frontend dependencies
-pnpm install
+# Start all services
+docker-compose up -d
 
-# Install backend dependencies
+# Check services status
+docker-compose ps
+
+# View logs
+docker-compose logs -f
+
+# Access the application
+# Frontend: http://localhost:5173
+# Backend API: http://localhost:8000
+# API Docs: http://localhost:8000/docs
+\`\`\`
+
+### Option 2: Local Development
+
+#### Backend Setup
+
+\`\`\`bash
 cd services/api
+
+# Create virtual environment
 python -m venv venv
 source venv/bin/activate  # On Windows: venv\Scripts\activate
+
+# Install dependencies
 pip install -r requirements.txt
-```
 
-3. **Setup environment variables**
-```bash
-# Backend
-cp services/api/.env.example services/api/.env
-
-# Frontend
-cp apps/web/.env.example apps/web/.env
-```
-
-4. **Start development environment**
-```bash
-# Start databases
-docker-compose up -d postgres redis
+# Set environment variables
+cp .env.example .env
+# Edit .env with your settings
 
 # Run database migrations
-cd services/api
 alembic upgrade head
 
-# Start backend (terminal 1)
-uvicorn app.main:app --reload
+# Start the server
+uvicorn app.main:app --reload --host 0.0.0.0 --port 8000
+\`\`\`
 
-# Start frontend (terminal 2)
+#### Frontend Setup
+
+\`\`\`bash
 cd apps/web
+
+# Install pnpm globally (if not installed)
+npm install -g pnpm
+
+# Install dependencies
+pnpm install
+
+# Start development server
 pnpm dev
-```
 
-5. **Access the application**
-- Frontend: http://localhost:5173
-- Backend API: http://localhost:8000
-- API Docs: http://localhost:8000/api/v1/docs
+# Frontend will be available at http://localhost:5173
+\`\`\`
 
-## Database Schema
+## 🧪 Testing
 
-Key tables:
-- `users` - User accounts and authentication
-- `products` - Product catalog
-- `inventory_lots` - Batch/lot tracking with expiry dates
-- `sales_orders` - Sales transactions
-- `purchase_orders` - Purchase orders
-- `manufacturing_orders` - Production orders
-- `customers` - Customer database
-- `suppliers` - Supplier management
-- `audit_logs` - Audit trail
+### Run All Tests
 
-See [Database Schema Documentation](./docs/database-schema.md) for complete details.
+\`\`\`bash
+# Using turbo (monorepo)
+pnpm test
 
-## API Documentation
+# Or run individually
+cd apps/web && pnpm test
+cd services/api && pytest
+\`\`\`
 
-Interactive API documentation is available at:
-- Swagger UI: http://localhost:8000/api/v1/docs
-- ReDoc: http://localhost:8000/api/v1/redoc
+### Backend Tests
+
+\`\`\`bash
+cd services/api
+
+# Run all tests
+pytest
+
+# With coverage
+pytest --cov=app --cov-report=html
+
+# Run specific test file
+pytest tests/backend/test_auth.py -v
+\`\`\`
+
+### Frontend Tests
+
+\`\`\`bash
+cd apps/web
+
+# Run tests
+pnpm test
+
+# With coverage
+pnpm test --coverage
+
+# Watch mode
+pnpm test --watch
+\`\`\`
+
+## 🔨 Build
+
+### Production Build
+
+\`\`\`bash
+# Frontend
+cd apps/web
+pnpm build
+
+# Backend (Docker)
+cd services/api
+docker build -t pharmacy-api:latest .
+\`\`\`
+
+## 📊 CI/CD
+
+### GitHub Actions Workflows
+
+- **CI Pipeline** - Runs on every push and PR
+  - 🔍 Linting (Backend & Frontend)
+  - 🧪 Tests with coverage
+  - 🏗️ Build verification
+  - 🐳 Docker build testing
+  - ✅ Integration tests
+
+- **CD Staging** - Auto-deploy to staging on \`develop\` branch
+- **CD Production** - Manual deploy to production from \`main\` branch
+
+### CI Status
+
+All commits to \`main\`, \`develop\`, and \`claude/**\` branches trigger the CI pipeline.
+
+[![CI Pipeline](https://github.com/kittyapol/ncare/actions/workflows/ci.yml/badge.svg)](https://github.com/kittyapol/ncare/actions/workflows/ci.yml)
+
+## 📚 API Documentation
+
+### Interactive API Docs
+
+- **Swagger UI**: http://localhost:8000/docs
+- **ReDoc**: http://localhost:8000/redoc
 
 ### Key Endpoints
 
-```
+\`\`\`
 POST   /api/v1/auth/login              # User login
-GET    /api/v1/auth/me                 # Get current user
-GET    /api/v1/inventory/products      # List products
-POST   /api/v1/inventory/products      # Create product
-GET    /api/v1/inventory/lots/expiring # Get expiring lots
-POST   /api/v1/sales/orders            # Create sales order
-GET    /api/v1/reports/dashboard-summary # Dashboard stats
-```
+POST   /api/v1/auth/refresh            # Refresh token
+GET    /api/v1/products/               # List products
+POST   /api/v1/sales/orders/           # Create sales order
+GET    /api/v1/reports/dashboard-summary  # Dashboard stats
+GET    /api/v1/customers/              # List customers
+GET    /api/v1/users/                  # List users (Admin only)
+\`\`\`
 
-## Development
+## 🗄️ Database Schema
 
-### Running Tests
+### Core Tables
 
-```bash
-# Backend tests
-cd services/api
-pytest tests/ -v --cov=app
+- \`users\` - User accounts and authentication
+- \`products\` - Product catalog
+- \`categories\` - Product categories
+- \`inventory_lots\` - Lot tracking with expiry dates
+- \`sales_orders\` - Sales transactions
+- \`sales_order_items\` - Order line items
+- \`purchase_orders\` - Purchase orders
+- \`suppliers\` - Vendor information
+- \`customers\` - Customer CRM data
 
-# Frontend tests
-cd apps/web
-pnpm test
-```
+## 🤝 Contributing
 
-### Code Quality
-
-```bash
-# Backend
-black .                 # Format code
-ruff check .           # Lint code
-mypy .                 # Type checking
-
-# Frontend
-pnpm lint              # ESLint
-pnpm type-check        # TypeScript check
-```
-
-### Database Migrations
-
-```bash
-cd services/api
-
-# Create new migration
-alembic revision --autogenerate -m "description"
-
-# Apply migrations
-alembic upgrade head
-
-# Rollback
-alembic downgrade -1
-```
-
-## Deployment
-
-### Staging
-
-Automatically deployed on push to `develop` branch via GitHub Actions.
-
-### Production
-
-Automatically deployed on push to `main` branch or version tags.
-
-### Manual Deployment
-
-```bash
-# Deploy infrastructure
-cd infrastructure/terraform
-terraform init
-terraform plan
-terraform apply
-
-# Build and push images
-docker build -t pharmacy-api:latest services/api
-docker build -t pharmacy-web:latest apps/web
-
-# Deploy to ECS (handled by CI/CD)
-```
-
-## Configuration
-
-### Environment Variables
-
-#### Backend (.env)
-```env
-DATABASE_URL=postgresql://user:pass@localhost:5432/pharmacy_db
-REDIS_URL=redis://localhost:6379/0
-SECRET_KEY=your-secret-key
-ENVIRONMENT=development
-```
-
-#### Frontend (.env)
-```env
-VITE_API_URL=http://localhost:8000
-```
-
-## Business Rules
-
-### Inventory
-- FIFO (First In, First Out) lot selection
-- Automatic expiry alerts 30 days before expiry
-- Low stock alerts at reorder point
-- Quality status tracking (passed/failed/quarantine)
-
-### Sales
-- Prescription required for controlled substances
-- Pharmacist approval for certain medications
-- 7% VAT calculation
-- Receipt generation with lot traceability
-
-### Purchase
-- Auto-reorder suggestions
-- Quality check on receiving
-- Automatic lot creation from received goods
-
-## Security
-
-- JWT-based authentication
-- Role-based access control (RBAC)
-- Audit trail for all critical operations
-- Input validation and sanitization
-- Rate limiting
-- SQL injection prevention
-- XSS protection
-
-## Monitoring
-
-- Application metrics via CloudWatch
-- Error tracking via Sentry
-- Database performance monitoring
-- API response time tracking
-
-## Contributing
+We welcome contributions! Please follow these steps:
 
 1. Fork the repository
-2. Create a feature branch (`git checkout -b feature/amazing-feature`)
-3. Commit your changes (`git commit -m 'Add amazing feature'`)
-4. Push to the branch (`git push origin feature/amazing-feature`)
+2. Create a feature branch (\`git checkout -b feature/amazing-feature\`)
+3. Commit your changes (\`git commit -m 'feat: add amazing feature'\`)
+4. Push to the branch (\`git push origin feature/amazing-feature\`)
 5. Open a Pull Request
 
-## License
+### Commit Message Convention
 
-Proprietary - All rights reserved
+Follow [Conventional Commits](https://www.conventionalcommits.org/):
 
-## Support
+- \`feat:\` - New feature
+- \`fix:\` - Bug fix
+- \`docs:\` - Documentation changes
+- \`style:\` - Code style changes (formatting)
+- \`refactor:\` - Code refactoring
+- \`test:\` - Adding or updating tests
+- \`chore:\` - Maintenance tasks
 
-For support, email support@pharmacy-erp.com or open an issue on GitHub.
+## 📝 License
 
-## Changelog
+This project is licensed under the MIT License.
 
-See [CHANGELOG.md](./CHANGELOG.md) for version history.
+## 🗺️ Roadmap
+
+### Completed ✅
+- [x] POS System
+- [x] Receipt Printing
+- [x] Inventory Management
+- [x] Customer Management
+- [x] Supplier Management
+- [x] Purchase Orders
+- [x] Dashboard Analytics
+- [x] User Management
+- [x] CI/CD Pipeline
+
+### Planned 🔄
+- [ ] Advanced Reports Module
+- [ ] Mobile App (React Native)
+- [ ] WhatsApp Notifications
+- [ ] Barcode Scanner Integration
+- [ ] E-Prescription System
+- [ ] Multi-branch Support
 
 ---
 
-**Built with ❤️ for the pharmaceutical industry**
+**Made with ❤️ for Thai Pharmacies**
