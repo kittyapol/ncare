@@ -4,6 +4,123 @@ import api from '@/services/api';
 
 type ReportTab = 'vat-purchases' | 'vat-sales' | 'cogs' | 'profit-loss';
 
+// Type definitions for report data
+interface ProfitLossData {
+  start_date: string;
+  end_date: string;
+  income_statement: {
+    revenue: {
+      total_sales: number;
+      output_vat: number;
+    };
+    cost_of_goods_sold: {
+      total_cogs: number;
+      input_vat_estimate: number;
+    };
+    gross_profit: {
+      amount: number;
+      margin_percent: number;
+    };
+    net_vat: {
+      output_vat: number;
+      input_vat_estimate: number;
+      net_vat_payable: number;
+    };
+  };
+  summary: {
+    total_revenue: number;
+    total_cogs: number;
+    gross_profit: number;
+    gross_margin_percent: number;
+  };
+}
+
+interface VATSalesDetail {
+  order_number: string;
+  order_date: string;
+  customer_id: string | null;
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  price_before_vat: number;
+  vat_amount: number;
+  price_including_vat: number;
+}
+
+interface VATSalesData {
+  start_date: string;
+  end_date: string;
+  summary: {
+    total_before_vat: number;
+    total_vat_amount: number;
+    total_including_vat: number;
+    vat_breakdown: {
+      vat_7_percent: number;
+      vat_0_percent: number;
+      vat_exempt: number;
+    };
+  };
+  details: VATSalesDetail[];
+}
+
+interface VATPurchasesDetail {
+  po_number: string;
+  date: string;
+  supplier_id: string;
+  product_id: string;
+  quantity: number;
+  unit_price: number;
+  vat_rate: number;
+  price_before_vat: number;
+  vat_amount: number;
+  line_before_vat: number;
+  line_vat: number;
+  line_total: number;
+}
+
+interface VATPurchasesData {
+  start_date: string;
+  end_date: string;
+  summary: {
+    total_before_vat: number;
+    total_vat_amount: number;
+    total_including_vat: number;
+    vat_breakdown: {
+      vat_7_percent: number;
+      vat_0_percent: number;
+      vat_exempt: number;
+    };
+  };
+  details: VATPurchasesDetail[];
+}
+
+interface COGSDetail {
+  order_number: string;
+  order_date: string;
+  product_name: string;
+  sku: string;
+  quantity: number;
+  unit_cost: number;
+  total_cost: number;
+  revenue: number;
+  profit: number;
+  profit_margin_percent: number;
+}
+
+interface COGSData {
+  start_date: string;
+  end_date: string;
+  summary: {
+    total_revenue: number;
+    total_cogs: number;
+    gross_profit: number;
+    gross_margin_percent: number;
+    total_quantity_sold: number;
+    average_cost_per_unit: number;
+  };
+  details: COGSDetail[];
+}
+
 export default function Reports() {
   const [activeTab, setActiveTab] = useState<ReportTab>('profit-loss');
 
@@ -169,7 +286,7 @@ export default function Reports() {
 // ============================================
 // Profit & Loss Report Component
 // ============================================
-function ProfitLossReport({ data }: { data: { income_statement: any; summary: any; start_date: string; end_date: string } }) {
+function ProfitLossReport({ data }: { data: ProfitLossData }) {
   const { income_statement, summary } = data;
 
   return (
@@ -276,7 +393,7 @@ function ProfitLossReport({ data }: { data: { income_statement: any; summary: an
 // ============================================
 // VAT Sales Report Component
 // ============================================
-function VATSalesReport({ data }: { data: any }) {
+function VATSalesReport({ data }: { data: VATSalesData }) {
   const { summary, details } = data;
 
   return (
@@ -336,7 +453,7 @@ function VATSalesReport({ data }: { data: any }) {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {details.map((item: any, idx: number) => (
+            {details.map((item: VATSalesDetail, idx: number) => (
               <tr key={idx} className="hover:bg-gray-50">
                 <td className="px-4 py-3 text-sm">{item.order_number}</td>
                 <td className="px-4 py-3 text-sm">{item.order_date}</td>
@@ -362,7 +479,7 @@ function VATSalesReport({ data }: { data: any }) {
 // ============================================
 // VAT Purchases Report Component
 // ============================================
-function VATPurchasesReport({ data }: { data: any }) {
+function VATPurchasesReport({ data }: { data: VATPurchasesData }) {
   const { summary, details } = data;
 
   return (
@@ -422,7 +539,7 @@ function VATPurchasesReport({ data }: { data: any }) {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {details.map((item: any, idx: number) => (
+            {details.map((item: VATPurchasesDetail, idx: number) => (
               <tr key={idx} className="hover:bg-gray-50">
                 <td className="px-4 py-3 text-sm">{item.po_number}</td>
                 <td className="px-4 py-3 text-sm">{item.date}</td>
@@ -448,7 +565,7 @@ function VATPurchasesReport({ data }: { data: any }) {
 // ============================================
 // COGS Report Component
 // ============================================
-function COGSReport({ data }: { data: any }) {
+function COGSReport({ data }: { data: COGSData }) {
   const { summary, details } = data;
 
   return (
@@ -517,7 +634,7 @@ function COGSReport({ data }: { data: any }) {
             </tr>
           </thead>
           <tbody className="bg-white divide-y divide-gray-200">
-            {details.map((item: any, idx: number) => (
+            {details.map((item: COGSDetail, idx: number) => (
               <tr key={idx} className="hover:bg-gray-50">
                 <td className="px-4 py-3 text-sm">{item.order_number}</td>
                 <td className="px-4 py-3 text-sm">
