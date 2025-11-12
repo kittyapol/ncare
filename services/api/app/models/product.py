@@ -66,9 +66,9 @@ class Product(Base):
 
     # Pharmaceutical details
     active_ingredient = Column(String(500))
-    dosage_form = Column(Enum(DosageForm))
+    dosage_form: Column[DosageForm] = Column(Enum(DosageForm))  # type: ignore[assignment]
     strength = Column(String(100))  # e.g., "500mg"
-    drug_type = Column(Enum(DrugType), default=DrugType.OTC)
+    drug_type: Column[DrugType] = Column(Enum(DrugType), default=DrugType.OTC)  # type: ignore[assignment]
     fda_number = Column(String(100))
     manufacturer = Column(String(255))
 
