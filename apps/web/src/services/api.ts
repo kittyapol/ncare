@@ -1,58 +1,168 @@
-import axios from 'axios';
+import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/stores/authStore';
+import env from '@/config/env';
 
-const API_URL = import.meta.env.VITE_API_URL || 'http://localhost:8000';
-
+// Create axios instance with configuration
 export const api = axios.create({
-  baseURL: `${API_URL}/api/v1`,
+  baseURL: `${env.apiBaseUrl}/api/v1`,
+  timeout: env.apiTimeout,
   headers: {
     'Content-Type': 'application/json',
   },
 });
 
-// Request interceptor
+// Request interceptor - Add auth token to requests
 api.interceptors.request.use(
-  (config) => {
+  (config: InternalAxiosRequestConfig) => {
     const token = useAuthStore.getState().accessToken;
-    if (token) {
+    if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
     return config;
   },
-  (error) => {
+  (error: AxiosError) => {
+    console.error('Request error:', error);
     return Promise.reject(error);
   }
 );
 
-// Response interceptor
+// Response interceptor - Handle errors and token refresh
 api.interceptors.response.use(
   (response) => response,
-  async (error) => {
-    const originalRequest = error.config;
+  async (error: AxiosError) => {
+    const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
-    if (error.response?.status === 401 && !originalRequest._retry) {
+    // Handle 401 Unauthorized - Token refresh
+    if (error.response?.status === 401 && originalRequest && !originalRequest._retry) {
       originalRequest._retry = true;
 
       try {
         const refreshToken = useAuthStore.getState().refreshToken;
-        const response = await axios.post(`${API_URL}/api/v1/auth/refresh`, {
+        if (!refreshToken) {
+          throw new Error('No refresh token available');
+        }
+
+        const response = await axios.post(`${env.apiBaseUrl}/api/v1/auth/refresh`, {
           refresh_token: refreshToken,
         });
 
         const { access_token, refresh_token } = response.data;
         useAuthStore.getState().login(access_token, refresh_token, useAuthStore.getState().user!);
 
-        originalRequest.headers.Authorization = `Bearer ${access_token}`;
+        if (originalRequest.headers) {
+          originalRequest.headers.Authorization = `Bearer ${access_token}`;
+        }
         return api(originalRequest);
-      } catch (err: unknown) {
+      } catch (refreshError) {
+        console.error('Token refresh failed:', refreshError);
         useAuthStore.getState().logout();
         window.location.href = '/login';
-        return Promise.reject(err);
+        return Promise.reject(refreshError);
       }
+    }
+
+    // Handle 403 Forbidden - Permission denied
+    if (error.response?.status === 403) {
+      console.error('Permission denied:', error.response.data);
+      // Could show a toast notification here
+    }
+
+    // Handle 404 Not Found
+    if (error.response?.status === 404) {
+      console.error('Resource not found:', error.config?.url);
+    }
+
+    // Handle 422 Validation Error
+    if (error.response?.status === 422) {
+      console.error('Validation error:', error.response.data);
+      // Format validation errors for display
+    }
+
+    // Handle 500 Internal Server Error
+    if (error.response?.status === 500) {
+      console.error('Server error:', error.response.data);
+      // Could show a generic error message to user
+    }
+
+    // Handle network errors
+    if (error.message === 'Network Error') {
+      console.error('Network error - please check your connection');
+      // Could show a network error notification
+    }
+
+    // Handle timeout errors
+    if (error.code === 'ECONNABORTED') {
+      console.error('Request timeout - please try again');
+    }
+
+    // Log error details in development
+    if (env.features.enableDebugMode) {
+      console.group('API Error Details');
+      console.error('URL:', error.config?.url);
+      console.error('Method:', error.config?.method);
+      console.error('Status:', error.response?.status);
+      console.error('Data:', error.response?.data);
+      console.error('Message:', error.message);
+      console.groupEnd();
     }
 
     return Promise.reject(error);
   }
 );
+
+/**
+ * Helper function to extract error message from API error
+ */
+export const getErrorMessage = (error: unknown): string => {
+  if (axios.isAxiosError(error)) {
+    // API error with response
+    if (error.response?.data?.detail) {
+      return typeof error.response.data.detail === 'string'
+        ? error.response.data.detail
+        : 'เกิดข้อผิดพลาดจากเซิร์ฟเวอร์';
+    }
+
+    // Network error
+    if (error.message === 'Network Error') {
+      return 'ไม่สามารถเชื่อมต่อกับเซิร์ฟเวอร์ กรุณาตรวจสอบการเชื่อมต่ออินเทอร์เน็ต';
+    }
+
+    // Timeout error
+    if (error.code === 'ECONNABORTED') {
+      return 'การเชื่อมต่อหมดเวลา กรุณาลองใหม่อีกครั้ง';
+    }
+
+    // Generic error
+    return error.message || 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
+  }
+
+  // Non-axios error
+  if (error instanceof Error) {
+    return error.message;
+  }
+
+  return 'เกิดข้อผิดพลาดที่ไม่ทราบสาเหตุ';
+};
+
+/**
+ * Helper function to check if error is a network error
+ */
+export const isNetworkError = (error: unknown): boolean => {
+  return axios.isAxiosError(error) && error.message === 'Network Error';
+};
+
+/**
+ * Helper function to check if error is an auth error
+ */
+export const isAuthError = (error: unknown): boolean => {
+  return axios.isAxiosError(error) && error.response?.status === 401;
+};
+
+/**
+ * Helper function to check if error is a validation error
+ */
+export const isValidationError = (error: unknown): boolean => {
+  return axios.isAxiosError(error) && error.response?.status === 422;
+};
 
 export default api;
