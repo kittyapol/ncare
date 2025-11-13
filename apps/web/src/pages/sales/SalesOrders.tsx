@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { SalesOrder } from '@/types';
 import ReceiptModal from '@/components/modals/ReceiptModal';
+import SalesOrderDetailsModal from '@/components/modals/SalesOrderDetailsModal';
 import api from '@/services/api';
 import { format } from 'date-fns';
 
@@ -11,8 +12,8 @@ export default function SalesOrders() {
   const [startDate, setStartDate] = useState<string>('');
   const [endDate, setEndDate] = useState<string>('');
   const [selectedOrder, setSelectedOrder] = useState<SalesOrder | null>(null);
+  const [viewingOrder, setViewingOrder] = useState<SalesOrder | null>(null);
   const [showReceipt, setShowReceipt] = useState(false);
-  const [showDetailsModal, setShowDetailsModal] = useState(false);
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 20;
 
@@ -41,6 +42,17 @@ export default function SalesOrders() {
     },
   });
 
+  // Calculate statistics
+  const totalOrders = data?.total || 0;
+  const totalAmount = data?.items?.reduce((sum: number, order: SalesOrder) =>
+    sum + order.total_amount, 0) || 0;
+  const completedOrders = data?.items?.filter(
+    (order: SalesOrder) => order.status === 'completed'
+  ).length || 0;
+  const pendingOrders = data?.items?.filter(
+    (order: SalesOrder) => ['draft', 'confirmed'].includes(order.status)
+  ).length || 0;
+
   const handleSearch = () => {
     setCurrentPage(0);
     refetch();
@@ -55,8 +67,7 @@ export default function SalesOrders() {
   };
 
   const handleViewDetails = (order: SalesOrder) => {
-    setSelectedOrder(order);
-    setShowDetailsModal(true);
+    setViewingOrder(order);
   };
 
   const formatCurrency = (amount: number) => {
@@ -77,10 +88,10 @@ export default function SalesOrders() {
 
   const getStatusBadge = (status: string) => {
     const statusStyles: Record<string, string> = {
-      draft: 'bg-gray-100 text-gray-800',
-      confirmed: 'bg-blue-100 text-blue-800',
-      completed: 'bg-green-100 text-green-800',
-      cancelled: 'bg-red-100 text-red-800',
+      draft: 'bg-gray-100 text-gray-800 border border-gray-300',
+      confirmed: 'bg-blue-100 text-blue-800 border border-blue-300',
+      completed: 'bg-green-100 text-green-800 border border-green-300',
+      cancelled: 'bg-red-100 text-red-800 border border-red-300',
     };
 
     const statusLabels: Record<string, string> = {
@@ -90,19 +101,27 @@ export default function SalesOrders() {
       cancelled: 'ยกเลิก',
     };
 
+    const statusIcons: Record<string, string> = {
+      draft: '📝',
+      confirmed: '✓',
+      completed: '✓✓',
+      cancelled: '✗',
+    };
+
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusStyles[status] || 'bg-gray-100 text-gray-800'}`}>
-        {statusLabels[status] || status}
+      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${statusStyles[status] || 'bg-gray-100 text-gray-800 border border-gray-300'}`}>
+        <span>{statusIcons[status]}</span>
+        <span>{statusLabels[status] || status}</span>
       </span>
     );
   };
 
   const getPaymentStatusBadge = (status: string) => {
     const statusStyles: Record<string, string> = {
-      pending: 'bg-yellow-100 text-yellow-800',
-      paid: 'bg-green-100 text-green-800',
-      partial: 'bg-orange-100 text-orange-800',
-      refunded: 'bg-red-100 text-red-800',
+      pending: 'bg-yellow-100 text-yellow-800 border border-yellow-300',
+      paid: 'bg-green-100 text-green-800 border border-green-300',
+      partial: 'bg-orange-100 text-orange-800 border border-orange-300',
+      refunded: 'bg-red-100 text-red-800 border border-red-300',
     };
 
     const statusLabels: Record<string, string> = {
@@ -112,9 +131,17 @@ export default function SalesOrders() {
       refunded: 'คืนเงิน',
     };
 
+    const statusIcons: Record<string, string> = {
+      pending: '⏱',
+      paid: '💰',
+      partial: '📊',
+      refunded: '↩',
+    };
+
     return (
-      <span className={`px-2 py-1 rounded-full text-xs font-medium ${statusStyles[status] || 'bg-gray-100 text-gray-800'}`}>
-        {statusLabels[status] || status}
+      <span className={`inline-flex items-center gap-1 px-2.5 py-1 rounded-full text-xs font-medium ${statusStyles[status] || 'bg-gray-100 text-gray-800 border border-gray-300'}`}>
+        <span>{statusIcons[status]}</span>
+        <span>{statusLabels[status] || status}</span>
       </span>
     );
   };
@@ -134,8 +161,76 @@ export default function SalesOrders() {
 
   return (
     <div>
+      {/* Header */}
       <div className="flex justify-between items-center mb-6">
         <h1 className="text-3xl font-bold text-gray-900">ประวัติการขาย</h1>
+      </div>
+
+      {/* Statistics Cards */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6 mb-6">
+        {/* Total Orders Card */}
+        <div className="card hover:shadow-lg transition-all duration-300 border-l-4 border-cyan-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-1">ออเดอร์ทั้งหมด</p>
+              <p className="text-2xl font-bold text-gray-900">{totalOrders.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 mt-1">รายการ</p>
+            </div>
+            <div className="p-3 bg-gradient-to-br from-cyan-500 to-cyan-600 rounded-lg">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Total Amount Card */}
+        <div className="card hover:shadow-lg transition-all duration-300 border-l-4 border-green-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-1">มูลค่ารวม</p>
+              <p className="text-2xl font-bold text-gray-900">{formatCurrency(totalAmount)}</p>
+              <p className="text-xs text-gray-500 mt-1">จากออเดอร์ทั้งหมด</p>
+            </div>
+            <div className="p-3 bg-gradient-to-br from-green-500 to-green-600 rounded-lg">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8c-1.657 0-3 .895-3 2s1.343 2 3 2 3 .895 3 2-1.343 2-3 2m0-8c1.11 0 2.08.402 2.599 1M12 8V7m0 1v8m0 0v1m0-1c-1.11 0-2.08-.402-2.599-1M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Completed Orders Card */}
+        <div className="card hover:shadow-lg transition-all duration-300 border-l-4 border-blue-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-1">เสร็จสิ้น</p>
+              <p className="text-2xl font-bold text-gray-900">{completedOrders.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 mt-1">ออเดอร์</p>
+            </div>
+            <div className="p-3 bg-gradient-to-br from-blue-500 to-blue-600 rounded-lg">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
+
+        {/* Pending Orders Card */}
+        <div className="card hover:shadow-lg transition-all duration-300 border-l-4 border-orange-500">
+          <div className="flex items-center justify-between">
+            <div>
+              <p className="text-sm font-medium text-gray-600 mb-1">รอดำเนินการ</p>
+              <p className="text-2xl font-bold text-gray-900">{pendingOrders.toLocaleString()}</p>
+              <p className="text-xs text-gray-500 mt-1">ออเดอร์</p>
+            </div>
+            <div className="p-3 bg-gradient-to-br from-orange-500 to-orange-600 rounded-lg">
+              <svg className="w-8 h-8 text-white" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" />
+              </svg>
+            </div>
+          </div>
+        </div>
       </div>
 
       {/* Filters */}
@@ -206,7 +301,7 @@ export default function SalesOrders() {
         <div className="flex gap-2">
           <button
             onClick={handleSearch}
-            className="px-4 py-2 bg-primary-600 text-white rounded hover:bg-primary-700 flex items-center gap-2"
+            className="px-4 py-2 bg-cyan-600 text-white rounded hover:bg-cyan-700 flex items-center gap-2 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -220,7 +315,7 @@ export default function SalesOrders() {
           </button>
           <button
             onClick={handleClearFilters}
-            className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 flex items-center gap-2"
+            className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300 flex items-center gap-2 transition-colors"
           >
             <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
               <path
@@ -239,7 +334,7 @@ export default function SalesOrders() {
       <div className="card overflow-hidden">
         {isLoading ? (
           <div className="text-center py-12">
-            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-primary-600"></div>
+            <div className="inline-block animate-spin rounded-full h-8 w-8 border-b-2 border-cyan-600"></div>
             <p className="mt-2 text-gray-600">กำลังโหลดข้อมูล...</p>
           </div>
         ) : !data?.items || data.items.length === 0 ? (
@@ -254,7 +349,7 @@ export default function SalesOrders() {
                 strokeLinecap="round"
                 strokeLinejoin="round"
                 strokeWidth={2}
-                d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"
+                d="M3 3h2l.4 2M7 13h10l4-8H5.4M7 13L5.4 5M7 13l-2.293 2.293c-.63.63-.184 1.707.707 1.707H17m0 0a2 2 0 100 4 2 2 0 000-4zm-8 2a2 2 0 11-4 0 2 2 0 014 0z"
               />
             </svg>
             <p className="mt-2 text-gray-500">ไม่พบรายการขาย</p>
@@ -263,10 +358,10 @@ export default function SalesOrders() {
           <>
             <div className="overflow-x-auto">
               <table className="w-full">
-                <thead className="bg-gray-50 border-b border-gray-200">
+                <thead className="bg-gradient-to-r from-gray-50 to-gray-100 border-b border-gray-200">
                   <tr>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
-                      เลขที่
+                      เลขที่ออเดอร์
                     </th>
                     <th className="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">
                       วันที่
@@ -293,9 +388,9 @@ export default function SalesOrders() {
                 </thead>
                 <tbody className="bg-white divide-y divide-gray-200">
                   {data.items.map((order: SalesOrder) => (
-                    <tr key={order.id} className="hover:bg-gray-50">
+                    <tr key={order.id} className="hover:bg-cyan-50 transition-colors">
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm font-medium text-gray-900">{order.order_number}</div>
+                        <div className="text-sm font-mono font-semibold text-cyan-600">{order.order_number}</div>
                         {order.prescription_number && (
                           <div className="text-xs text-gray-500">ใบสั่งยา: {order.prescription_number}</div>
                         )}
@@ -309,15 +404,31 @@ export default function SalesOrders() {
                         )}
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap">
-                        <div className="text-sm text-gray-900">
-                          {order.customer_id ? 'ลูกค้าประจำ' : 'ลูกค้าทั่วไป'}
+                        <div className="flex items-center gap-2">
+                          {order.customer_id ? (
+                            <>
+                              <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-indigo-100 text-indigo-800 border border-indigo-300">
+                                <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                                </svg>
+                                ลูกค้าประจำ
+                              </span>
+                            </>
+                          ) : (
+                            <span className="inline-flex items-center px-2 py-1 rounded-full text-xs font-medium bg-gray-100 text-gray-800 border border-gray-300">
+                              <svg className="w-3 h-3 mr-1" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z" />
+                              </svg>
+                              ลูกค้าทั่วไป
+                            </span>
+                          )}
                         </div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-center">
-                        <div className="text-sm text-gray-900">{order.items?.length || 0}</div>
+                        <div className="text-sm font-medium text-gray-900">{order.items?.length || 0}</div>
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right">
-                        <div className="text-sm font-medium text-gray-900">
+                        <div className="text-sm font-semibold text-gray-900">
                           {formatCurrency(order.total_amount)}
                         </div>
                         {order.tax_amount > 0 && (
@@ -334,10 +445,10 @@ export default function SalesOrders() {
                         <div className="flex items-center justify-end gap-2">
                           <button
                             onClick={() => handleViewDetails(order)}
-                            className="text-primary-600 hover:text-primary-900 inline-flex items-center gap-1"
+                            className="p-2 text-cyan-600 hover:text-cyan-900 hover:bg-cyan-100 rounded-lg transition-all inline-flex items-center gap-1"
                             title="ดูรายละเอียด"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -354,10 +465,10 @@ export default function SalesOrders() {
                           </button>
                           <button
                             onClick={() => handleViewReceipt(order)}
-                            className="text-blue-600 hover:text-blue-900 inline-flex items-center gap-1"
+                            className="p-2 text-blue-600 hover:text-blue-900 hover:bg-blue-100 rounded-lg transition-all inline-flex items-center gap-1"
                             title="พิมพ์ใบเสร็จ"
                           >
-                            <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                               <path
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
@@ -376,7 +487,7 @@ export default function SalesOrders() {
 
             {/* Pagination */}
             {data.total > pageSize && (
-              <div className="bg-gray-50 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
+              <div className="bg-gradient-to-r from-gray-50 to-gray-100 px-6 py-4 border-t border-gray-200 flex items-center justify-between">
                 <div className="text-sm text-gray-700">
                   แสดง {currentPage * pageSize + 1} ถึง{' '}
                   {Math.min((currentPage + 1) * pageSize, data.total)} จาก {data.total} รายการ
@@ -385,14 +496,17 @@ export default function SalesOrders() {
                   <button
                     onClick={() => setCurrentPage((p) => Math.max(0, p - 1))}
                     disabled={currentPage === 0}
-                    className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-gray-700 transition-colors"
                   >
                     ก่อนหน้า
                   </button>
+                  <div className="px-4 py-2 bg-cyan-600 text-white rounded-lg text-sm font-medium">
+                    {currentPage + 1}
+                  </div>
                   <button
                     onClick={() => setCurrentPage((p) => p + 1)}
                     disabled={(currentPage + 1) * pageSize >= data.total}
-                    className="px-3 py-1 border border-gray-300 rounded hover:bg-gray-100 disabled:opacity-50 disabled:cursor-not-allowed text-sm"
+                    className="px-4 py-2 border border-gray-300 rounded-lg hover:bg-white disabled:opacity-50 disabled:cursor-not-allowed text-sm font-medium text-gray-700 transition-colors"
                   >
                     ถัดไป
                   </button>
@@ -404,234 +518,29 @@ export default function SalesOrders() {
       </div>
 
       {/* Receipt Modal */}
-      <ReceiptModal
-        isOpen={showReceipt}
-        onClose={() => {
-          setShowReceipt(false);
-          setSelectedOrder(null);
-        }}
-        order={selectedOrder}
-      />
+      {selectedOrder && (
+        <ReceiptModal
+          isOpen={showReceipt}
+          onClose={() => {
+            setShowReceipt(false);
+            setSelectedOrder(null);
+          }}
+          order={selectedOrder}
+        />
+      )}
 
-      {/* Order Details Modal */}
-      {showDetailsModal && selectedOrder && (
-        <div className="fixed inset-0 z-50 overflow-y-auto">
-          <div
-            className="fixed inset-0 bg-black bg-opacity-50 transition-opacity"
-            onClick={() => {
-              setShowDetailsModal(false);
-              setSelectedOrder(null);
-            }}
-          />
-
-          <div className="flex min-h-full items-center justify-center p-4">
-            <div className="relative w-full max-w-4xl bg-white rounded-lg shadow-xl">
-              {/* Modal Header */}
-              <div className="flex items-center justify-between p-6 border-b border-gray-200">
-                <div>
-                  <h3 className="text-xl font-semibold text-gray-900">
-                    รายละเอียดออเดอร์ {selectedOrder.order_number}
-                  </h3>
-                  <p className="text-sm text-gray-500 mt-1">
-                    วันที่: {formatDateTime(selectedOrder.order_date)}
-                  </p>
-                </div>
-                <button
-                  onClick={() => {
-                    setShowDetailsModal(false);
-                    setSelectedOrder(null);
-                  }}
-                  className="p-2 text-gray-400 hover:text-gray-600 rounded-full hover:bg-gray-100"
-                >
-                  <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M6 18L18 6M6 6l12 12"
-                    />
-                  </svg>
-                </button>
-              </div>
-
-              {/* Modal Content */}
-              <div className="p-6 max-h-[calc(100vh-200px)] overflow-y-auto">
-                {/* Order Info Grid */}
-                <div className="grid grid-cols-2 gap-4 mb-6">
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-2">สถานะออเดอร์</h4>
-                    <div>{getStatusBadge(selectedOrder.status)}</div>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-2">สถานะการชำระเงิน</h4>
-                    <div>{getPaymentStatusBadge(selectedOrder.payment_status)}</div>
-                  </div>
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-2">ลูกค้า</h4>
-                    <p className="text-sm text-gray-900">
-                      {selectedOrder.customer_id ? 'ลูกค้าประจำ' : 'ลูกค้าทั่วไป'}
-                    </p>
-                  </div>
-                  {selectedOrder.prescription_number && (
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500 mb-2">เลขที่ใบสั่งยา</h4>
-                      <p className="text-sm text-gray-900">{selectedOrder.prescription_number}</p>
-                    </div>
-                  )}
-                  <div>
-                    <h4 className="text-sm font-medium text-gray-500 mb-2">วิธีชำระเงิน</h4>
-                    <p className="text-sm text-gray-900">
-                      {selectedOrder.payment_method || '-'}
-                    </p>
-                  </div>
-                  {selectedOrder.completed_at && (
-                    <div>
-                      <h4 className="text-sm font-medium text-gray-500 mb-2">วันที่ชำระเงิน</h4>
-                      <p className="text-sm text-gray-900">
-                        {formatDateTime(selectedOrder.completed_at)}
-                      </p>
-                    </div>
-                  )}
-                </div>
-
-                {/* Items Table */}
-                <div className="mb-6">
-                  <h4 className="text-lg font-semibold text-gray-900 mb-3">รายการสินค้า</h4>
-                  <div className="border border-gray-200 rounded-lg overflow-hidden">
-                    <table className="w-full">
-                      <thead className="bg-gray-50">
-                        <tr>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                            ลำดับ
-                          </th>
-                          <th className="px-4 py-3 text-left text-xs font-medium text-gray-500 uppercase">
-                            สินค้า
-                          </th>
-                          <th className="px-4 py-3 text-center text-xs font-medium text-gray-500 uppercase">
-                            จำนวน
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                            ราคา/หน่วย
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                            ส่วนลด
-                          </th>
-                          <th className="px-4 py-3 text-right text-xs font-medium text-gray-500 uppercase">
-                            ยอดรวม
-                          </th>
-                        </tr>
-                      </thead>
-                      <tbody className="bg-white divide-y divide-gray-200">
-                        {selectedOrder.items?.map((item, index) => (
-                          <tr key={item.id}>
-                            <td className="px-4 py-3 text-sm text-gray-900">{index + 1}</td>
-                            <td className="px-4 py-3 text-sm text-gray-900">
-                              {item.product?.name_th || `Product ID: ${item.product_id}`}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-900 text-center">
-                              {item.quantity}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                              {formatCurrency(item.unit_price)}
-                            </td>
-                            <td className="px-4 py-3 text-sm text-gray-900 text-right">
-                              {formatCurrency(item.discount_amount)}
-                            </td>
-                            <td className="px-4 py-3 text-sm font-medium text-gray-900 text-right">
-                              {formatCurrency(item.line_total)}
-                            </td>
-                          </tr>
-                        ))}
-                      </tbody>
-                    </table>
-                  </div>
-                </div>
-
-                {/* Summary */}
-                <div className="border-t border-gray-200 pt-6">
-                  <div className="flex justify-end">
-                    <div className="w-80">
-                      <div className="flex justify-between py-2 text-sm">
-                        <span className="text-gray-600">รวมเป็นเงิน:</span>
-                        <span className="font-medium">{formatCurrency(selectedOrder.subtotal)}</span>
-                      </div>
-                      <div className="flex justify-between py-2 text-sm">
-                        <span className="text-gray-600">ส่วนลด:</span>
-                        <span className="font-medium">
-                          {formatCurrency(selectedOrder.discount_amount)}
-                        </span>
-                      </div>
-                      <div className="flex justify-between py-2 text-sm">
-                        <span className="text-gray-600">VAT 7%:</span>
-                        <span className="font-medium">{formatCurrency(selectedOrder.tax_amount)}</span>
-                      </div>
-                      <div className="flex justify-between py-3 text-base border-t border-gray-200 font-bold">
-                        <span className="text-gray-900">รวมทั้งสิ้น:</span>
-                        <span className="text-primary-600">
-                          {formatCurrency(selectedOrder.total_amount)}
-                        </span>
-                      </div>
-                      {selectedOrder.paid_amount > 0 && (
-                        <>
-                          <div className="flex justify-between py-2 text-sm">
-                            <span className="text-gray-600">เงินที่รับ:</span>
-                            <span className="font-medium">
-                              {formatCurrency(selectedOrder.paid_amount)}
-                            </span>
-                          </div>
-                          <div className="flex justify-between py-2 text-sm">
-                            <span className="text-gray-600">เงินทอน:</span>
-                            <span className="font-medium">
-                              {formatCurrency(selectedOrder.change_amount)}
-                            </span>
-                          </div>
-                        </>
-                      )}
-                    </div>
-                  </div>
-                </div>
-
-                {/* Notes */}
-                {selectedOrder.notes && (
-                  <div className="mt-6 p-4 bg-gray-50 rounded-lg">
-                    <h4 className="text-sm font-medium text-gray-700 mb-2">หมายเหตุ</h4>
-                    <p className="text-sm text-gray-600">{selectedOrder.notes}</p>
-                  </div>
-                )}
-              </div>
-
-              {/* Modal Footer */}
-              <div className="flex items-center justify-end gap-3 p-6 border-t border-gray-200">
-                <button
-                  onClick={() => {
-                    setShowDetailsModal(false);
-                    setShowReceipt(true);
-                  }}
-                  className="px-4 py-2 bg-blue-600 text-white rounded hover:bg-blue-700 flex items-center gap-2"
-                >
-                  <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                    <path
-                      strokeLinecap="round"
-                      strokeLinejoin="round"
-                      strokeWidth={2}
-                      d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"
-                    />
-                  </svg>
-                  พิมพ์ใบเสร็จ
-                </button>
-                <button
-                  onClick={() => {
-                    setShowDetailsModal(false);
-                    setSelectedOrder(null);
-                  }}
-                  className="px-4 py-2 bg-gray-200 text-gray-700 rounded hover:bg-gray-300"
-                >
-                  ปิด
-                </button>
-              </div>
-            </div>
-          </div>
-        </div>
+      {/* Sales Order Details Modal */}
+      {viewingOrder && (
+        <SalesOrderDetailsModal
+          isOpen={!!viewingOrder}
+          onClose={() => setViewingOrder(null)}
+          salesOrder={viewingOrder}
+          onPrintReceipt={() => {
+            setSelectedOrder(viewingOrder);
+            setShowReceipt(true);
+            setViewingOrder(null);
+          }}
+        />
       )}
     </div>
   );
