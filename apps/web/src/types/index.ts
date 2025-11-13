@@ -224,4 +224,36 @@ export interface DashboardStats {
   total_products: number;
   low_stock_items: number;
   expiring_items: number;
+  // Extended analytics data (optional)
+  weekly_sales?: number;
+  monthly_sales?: number;
+  total_revenue?: number;
+  total_orders?: number;
+  average_order_value?: number;
+}
+
+// Analytics Data Types
+export interface SalesTrendData {
+  date: string;
+  sales: number;
+  orders: number;
+}
+
+export interface TopProductData {
+  product_name: string;
+  quantity_sold: number;
+  revenue: number;
+}
+
+export interface CategorySalesData {
+  category: string;
+  sales: number;
+  percentage: number;
+}
+
+export interface RevenueData {
+  date: string;
+  revenue: number;
+  cost: number;
+  profit: number;
 }
