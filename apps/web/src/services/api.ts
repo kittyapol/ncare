@@ -1,6 +1,7 @@
 import axios, { AxiosError, InternalAxiosRequestConfig } from 'axios';
 import { useAuthStore } from '@/stores/authStore';
 import env from '@/config/env';
+import monitoring, { ErrorSeverity, MetricType } from '@/services/monitoring';
 
 // Create axios instance with configuration
 export const api = axios.create({
@@ -18,17 +19,58 @@ api.interceptors.request.use(
     if (token && config.headers) {
       config.headers.Authorization = `Bearer ${token}`;
     }
+
+    // Add request start time for performance tracking
+    (config as any).metadata = { startTime: Date.now() };
+
+    // Add breadcrumb for API request
+    monitoring.addBreadcrumb('api', `Request: ${config.method?.toUpperCase()} ${config.url}`, {
+      method: config.method,
+      url: config.url,
+    });
+
     return config;
   },
   (error: AxiosError) => {
     console.error('Request error:', error);
+    monitoring.captureError(
+      error as Error,
+      ErrorSeverity.Error,
+      {
+        component: 'API',
+        action: 'request_error',
+      }
+    );
     return Promise.reject(error);
   }
 );
 
 // Response interceptor - Handle errors and token refresh
 api.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Track API performance
+    const config = response.config as any;
+    if (config.metadata?.startTime) {
+      const duration = Date.now() - config.metadata.startTime;
+      monitoring.trackPerformance({
+        name: `API: ${config.method?.toUpperCase()} ${config.url}`,
+        type: MetricType.ApiCall,
+        value: duration,
+        unit: 'ms',
+        metadata: {
+          status: response.status,
+          url: config.url,
+        },
+      });
+    }
+
+    // Add breadcrumb for successful response
+    monitoring.addBreadcrumb('api', `Response: ${response.status} ${response.config.url}`, {
+      status: response.status,
+    });
+
+    return response;
+  },
   async (error: AxiosError) => {
     const originalRequest = error.config as InternalAxiosRequestConfig & { _retry?: boolean };
 
@@ -105,6 +147,20 @@ api.interceptors.response.use(
       console.error('Message:', error.message);
       console.groupEnd();
     }
+
+    // Send error to monitoring service
+    const severity = error.response?.status === 500 ? ErrorSeverity.Error : ErrorSeverity.Warning;
+    monitoring.captureError(error as Error, severity, {
+      component: 'API',
+      action: 'response_error',
+      metadata: {
+        url: error.config?.url,
+        method: error.config?.method,
+        status: error.response?.status,
+        statusText: error.response?.statusText,
+        data: error.response?.data,
+      },
+    });
 
     return Promise.reject(error);
   }

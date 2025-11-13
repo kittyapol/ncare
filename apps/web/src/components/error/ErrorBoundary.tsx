@@ -1,4 +1,5 @@
 import { Component, ErrorInfo, ReactNode } from 'react';
+import monitoring, { ErrorSeverity } from '@/services/monitoring';
 
 interface Props {
   children: ReactNode;
@@ -41,13 +42,20 @@ class ErrorBoundary extends Component<Props, State> {
       errorInfo,
     });
 
+    // Send to monitoring service (Sentry, LogRocket, etc.)
+    monitoring.captureError(error, ErrorSeverity.Fatal, {
+      component: 'ErrorBoundary',
+      action: 'component_error',
+      metadata: {
+        componentStack: errorInfo.componentStack,
+        errorBoundary: true,
+      },
+    });
+
     // Call optional error callback
     if (this.props.onError) {
       this.props.onError(error, errorInfo);
     }
-
-    // TODO: Send to error logging service (e.g., Sentry, LogRocket)
-    // logErrorToService(error, errorInfo);
   }
 
   resetError = () => {
