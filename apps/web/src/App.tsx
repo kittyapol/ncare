@@ -1,5 +1,6 @@
 import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import { Toaster } from 'react-hot-toast';
 import { useAuthStore } from './stores/authStore';
 import LoadingSpinner from './components/common/LoadingSpinner';
 import ErrorBoundary from './components/error/ErrorBoundary';
@@ -17,6 +18,7 @@ const InventoryLots = lazy(() => import('./pages/inventory/InventoryLots'));
 const POSInterface = lazy(() => import('./pages/sales/POSInterface'));
 const SalesOrders = lazy(() => import('./pages/sales/SalesOrders'));
 const PurchaseOrders = lazy(() => import('./pages/purchase/PurchaseOrders'));
+const Prescriptions = lazy(() => import('./pages/Prescriptions'));
 const SupplierList = lazy(() => import('./pages/suppliers/SupplierList'));
 const CustomerList = lazy(() => import('./pages/customers/CustomerList'));
 const UserList = lazy(() => import('./pages/users/UserList'));
@@ -32,6 +34,30 @@ function App() {
   return (
     <ErrorBoundary>
       <BrowserRouter>
+        <Toaster
+          position="top-right"
+          toastOptions={{
+            duration: 4000,
+            style: {
+              background: '#363636',
+              color: '#fff',
+            },
+            success: {
+              duration: 3000,
+              iconTheme: {
+                primary: '#10b981',
+                secondary: '#fff',
+              },
+            },
+            error: {
+              duration: 4000,
+              iconTheme: {
+                primary: '#ef4444',
+                secondary: '#fff',
+              },
+            },
+          }}
+        />
         <Routes>
           {/* Auth routes */}
           <Route element={<AuthLayout />}>
@@ -114,6 +140,14 @@ function App() {
               element={
                 <Suspense fallback={<LoadingSpinner message="กำลังโหลดรายชื่อซัพพลายเออร์..." />}>
                   <SupplierList />
+                </Suspense>
+              }
+            />
+            <Route
+              path="/prescriptions"
+              element={
+                <Suspense fallback={<LoadingSpinner message="กำลังโหลดใบสั่งยา..." />}>
+                  <Prescriptions />
                 </Suspense>
               }
             />

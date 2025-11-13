@@ -257,3 +257,209 @@ export interface RevenueData {
   cost: number;
   profit: number;
 }
+
+// ============================================================================
+// Prescription Management Types
+// ============================================================================
+
+export interface Prescription {
+  id: string;
+  prescription_number: string;
+  customer_id: string;
+  doctor_name: string;
+  doctor_license: string;
+  hospital_clinic?: string;
+  prescription_date: string;
+  valid_until?: string;
+  diagnosis?: string;
+  status: 'pending_verification' | 'verified' | 'dispensed' | 'partially_dispensed' | 'cancelled' | 'expired';
+  prescription_type: 'acute' | 'chronic' | 'controlled' | 'narcotic';
+  is_refillable: boolean;
+  max_refills?: number;
+  refills_remaining?: number;
+  // Pharmacist verification
+  verified_by?: string;
+  verified_at?: string;
+  verification_notes?: string;
+  // Dispensing information
+  dispensed_by?: string;
+  dispensed_at?: string;
+  sales_order_id?: string;
+  // Document attachments
+  has_documents: boolean;
+  document_count: number;
+  // Safety checks
+  drug_interaction_checked: boolean;
+  allergy_checked: boolean;
+  warning_notes?: string;
+  // Controlled substance logging (for FDA compliance)
+  is_controlled_substance: boolean;
+  controlled_log_notes?: string;
+  notes?: string;
+  created_at: string;
+  updated_at?: string;
+  // Nested relations
+  customer?: Customer;
+  items?: PrescriptionItem[];
+  documents?: PrescriptionDocument[];
+  refills?: PrescriptionRefill[];
+  verifications?: PharmacistVerification[];
+}
+
+export interface PrescriptionItem {
+  id: string;
+  prescription_id: string;
+  product_id: string;
+  drug_name: string;
+  generic_name?: string;
+  strength?: string;
+  dosage_form?: string;
+  quantity_prescribed: number;
+  quantity_dispensed: number;
+  dosage_instructions: string;
+  frequency?: string;
+  duration?: string;
+  special_instructions?: string;
+  is_substitutable: boolean;
+  substitution_notes?: string;
+  // Safety flags
+  requires_counseling: boolean;
+  has_interaction_warning: boolean;
+  has_allergy_warning: boolean;
+  warning_message?: string;
+  created_at: string;
+  updated_at?: string;
+  // Nested relations
+  product?: Product;
+}
+
+export interface PrescriptionDocument {
+  id: string;
+  prescription_id: string;
+  document_type: 'prescription_image' | 'prescription_pdf' | 'id_card' | 'insurance_card' | 'other';
+  file_name: string;
+  file_path: string;
+  file_size: number;
+  mime_type: string;
+  uploaded_by: string;
+  uploaded_at: string;
+  notes?: string;
+}
+
+export interface PrescriptionRefill {
+  id: string;
+  prescription_id: string;
+  refill_number: number;
+  refill_date: string;
+  quantity_dispensed: number;
+  dispensed_by: string;
+  sales_order_id?: string;
+  pharmacist_notes?: string;
+  created_at: string;
+  // Nested relations
+  sales_order?: SalesOrder;
+}
+
+export interface PharmacistVerification {
+  id: string;
+  prescription_id: string;
+  pharmacist_id: string;
+  verification_status: 'pending' | 'approved' | 'rejected' | 'needs_clarification';
+  verification_date: string;
+  // Verification checklist
+  prescription_validity_checked: boolean;
+  doctor_license_verified: boolean;
+  drug_interactions_checked: boolean;
+  allergies_checked: boolean;
+  dosage_verified: boolean;
+  duration_appropriate: boolean;
+  // Decision and notes
+  decision: 'approve' | 'reject' | 'request_clarification';
+  rejection_reason?: string;
+  clarification_notes?: string;
+  pharmacist_notes?: string;
+  // Follow-up actions
+  requires_doctor_contact: boolean;
+  doctor_contacted_at?: string;
+  doctor_response?: string;
+  created_at: string;
+  updated_at?: string;
+  // Nested relations
+  pharmacist?: User;
+}
+
+// ============================================================================
+// Drug Safety & Interaction Types
+// ============================================================================
+
+export interface DrugInteraction {
+  id: string;
+  drug_a_id: string;
+  drug_b_id: string;
+  interaction_severity: 'minor' | 'moderate' | 'major' | 'contraindicated';
+  interaction_type: 'pharmacodynamic' | 'pharmacokinetic' | 'both';
+  description_th: string;
+  description_en?: string;
+  clinical_effect?: string;
+  management_recommendation: string;
+  evidence_level: 'theoretical' | 'case_report' | 'study' | 'established';
+  reference_source?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+  // Nested relations
+  drug_a?: Product;
+  drug_b?: Product;
+}
+
+export interface DrugAllergyAlert {
+  id: string;
+  customer_id: string;
+  allergen_type: 'drug' | 'ingredient' | 'class';
+  allergen_name: string;
+  product_id?: string;
+  active_ingredient?: string;
+  drug_class?: string;
+  reaction_severity: 'mild' | 'moderate' | 'severe' | 'life_threatening';
+  reaction_type?: string;
+  symptoms?: string;
+  onset_date?: string;
+  verified_by?: string;
+  verified_at?: string;
+  notes?: string;
+  is_active: boolean;
+  created_at: string;
+  updated_at?: string;
+  // Nested relations
+  customer?: Customer;
+  product?: Product;
+}
+
+export interface SafetyCheck {
+  id: string;
+  check_type: 'prescription_verification' | 'drug_interaction' | 'allergy_check' | 'dosage_validation';
+  entity_id: string; // prescription_id, sales_order_id, etc.
+  entity_type: 'prescription' | 'sales_order';
+  check_date: string;
+  performed_by: string;
+  check_result: 'pass' | 'warning' | 'fail';
+  // Check details
+  warnings_found: number;
+  errors_found: number;
+  critical_issues: number;
+  details: SafetyCheckDetail[];
+  override_allowed: boolean;
+  overridden_by?: string;
+  override_reason?: string;
+  override_at?: string;
+  notes?: string;
+  created_at: string;
+}
+
+export interface SafetyCheckDetail {
+  severity: 'info' | 'warning' | 'error' | 'critical';
+  category: 'interaction' | 'allergy' | 'dosage' | 'contraindication' | 'duplicate_therapy' | 'age_related' | 'pregnancy' | 'other';
+  message: string;
+  recommendation?: string;
+  affected_drugs?: string[];
+}

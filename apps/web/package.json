@@ -11,20 +11,21 @@
     "type-check": "tsc --noEmit"
   },
   "dependencies": {
-    "react": "^18.2.0",
-    "react-dom": "^18.2.0",
-    "react-router-dom": "^6.20.0",
-    "zustand": "^4.4.7",
+    "@hookform/resolvers": "^3.3.2",
     "@tanstack/react-query": "^5.12.2",
     "axios": "^1.6.2",
-    "react-hook-form": "^7.48.2",
-    "zod": "^3.22.4",
-    "@hookform/resolvers": "^3.3.2",
-    "recharts": "^2.10.3",
-    "quagga": "^0.12.1",
-    "date-fns": "^2.30.0",
     "clsx": "^2.0.0",
-    "tailwind-merge": "^2.1.0"
+    "date-fns": "^2.30.0",
+    "quagga": "^0.12.1",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0",
+    "react-hook-form": "^7.48.2",
+    "react-hot-toast": "^2.6.0",
+    "react-router-dom": "^6.20.0",
+    "recharts": "^2.10.3",
+    "tailwind-merge": "^2.1.0",
+    "zod": "^3.22.4",
+    "zustand": "^4.4.7"
   },
   "devDependencies": {
     "@types/react": "^18.2.43",
