@@ -3,6 +3,7 @@ from decimal import Decimal
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi.responses import StreamingResponse
 from sqlalchemy.orm import Session
 
 from app.api.deps import get_current_user
@@ -17,6 +18,7 @@ from app.schemas.sales import (
     SalesOrderList,
     SalesOrderResponse,
 )
+from app.services.receipt_service import ReceiptService
 
 router = APIRouter()
 
@@ -285,4 +287,86 @@ def complete_sales_order(
         raise HTTPException(
             status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
             detail=f"Failed to complete sales order: {str(e)}",
+        )
+
+
+@router.get("/orders/{order_id}/receipt/pdf")
+def download_receipt_pdf(
+    order_id: str,
+    db: Session = Depends(get_db),
+    current_user: User = Depends(get_current_user),
+) -> StreamingResponse:
+    """Download receipt as PDF (Thai Tax Invoice format)
+
+    Generates a Thai-formatted tax invoice/receipt PDF for the specified order.
+    """
+    # Get order with items
+    order = db.query(SalesOrder).filter(SalesOrder.id == order_id).first()
+    if not order:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Order not found")
+
+    # Prepare order data for receipt
+    order_data = {
+        "order_number": order.order_number,
+        "order_date": order.order_date,
+        "subtotal": order.subtotal,
+        "discount_amount": order.discount_amount,
+        "tax_amount": order.tax_amount,
+        "total_amount": order.total_amount,
+        "paid_amount": order.paid_amount,
+        "change_amount": order.change_amount,
+        "payment_method": order.payment_method.value if order.payment_method else "cash",
+        "items": [],
+        "customer": None,
+        "cashier": None,
+    }
+
+    # Add customer info if exists
+    if order.customer:
+        customer = order.customer
+        order_data["customer"] = {
+            "name": customer.name,
+            "address": customer.address,
+            "phone": customer.phone or customer.mobile,
+        }
+
+    # Add cashier info
+    if order.cashier:
+        order_data["cashier"] = {
+            "full_name": order.cashier.full_name,
+            "email": order.cashier.email,
+        }
+
+    # Add items with product details
+    for item in order.items:
+        product = item.product if hasattr(item, "product") else None
+        item_data = {
+            "product_id": item.product_id,
+            "quantity": item.quantity,
+            "unit_price": item.unit_price,
+            "discount_amount": item.discount_amount,
+            "line_total": item.line_total,
+            "product": {
+                "name_th": product.name_th if product else f"Product {item.product_id}",
+                "name_en": product.name_en if product else "",
+            },
+        }
+        order_data["items"].append(item_data)
+
+    # Generate PDF
+    try:
+        pdf_buffer = ReceiptService.generate_receipt_pdf(order_data)
+
+        # Return PDF as downloadable file
+        filename = f"Receipt_{order.order_number}.pdf"
+        return StreamingResponse(
+            pdf_buffer,
+            media_type="application/pdf",
+            headers={"Content-Disposition": f'attachment; filename="{filename}"'},
+        )
+
+    except Exception as e:
+        raise HTTPException(
+            status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+            detail=f"Failed to generate receipt: {str(e)}",
         )

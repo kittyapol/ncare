@@ -1,6 +1,7 @@
 import { useRef } from 'react';
 import { SalesOrder } from '@/types';
 import Receipt from '@/components/receipt/Receipt';
+import api from '@/services/api';
 
 interface ReceiptModalProps {
   isOpen: boolean;
@@ -19,12 +20,25 @@ export default function ReceiptModal({ isOpen, onClose, order }: ReceiptModalPro
   };
 
   const handleDownloadPDF = async () => {
-    // Simple approach: trigger print dialog with "Save as PDF" option
-    // For more advanced PDF generation, we could use libraries like:
-    // - jsPDF with html2canvas
-    // - react-to-pdf
-    // - @react-pdf/renderer
-    window.print();
+    try {
+      // Download Thai Tax Invoice PDF from backend
+      const response = await api.get(`/sales/orders/${order.id}/receipt/pdf`, {
+        responseType: 'blob', // Important for binary data (PDF)
+      });
+
+      // Create blob link to download
+      const url = window.URL.createObjectURL(new Blob([response.data]));
+      const link = document.createElement('a');
+      link.href = url;
+      link.setAttribute('download', `Receipt_${order.order_number}.pdf`);
+      document.body.appendChild(link);
+      link.click();
+      link.remove();
+      window.URL.revokeObjectURL(url);
+    } catch (error) {
+      console.error('Failed to download PDF:', error);
+      alert('ไม่สามารถดาวน์โหลดใบเสร็จได้ กรุณาลองใหม่อีกครั้ง');
+    }
   };
 
   return (
