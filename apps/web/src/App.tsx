@@ -1,23 +1,25 @@
+import { lazy, Suspense } from 'react';
 import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
 import { useAuthStore } from './stores/authStore';
+import LoadingSpinner from './components/common/LoadingSpinner';
 
-// Layouts
+// Layouts - Keep as eager imports since they're always needed
 import DashboardLayout from './components/layouts/DashboardLayout';
 import AuthLayout from './components/layouts/AuthLayout';
 
-// Pages
-import Login from './pages/auth/Login';
-import Dashboard from './pages/Dashboard';
-import ProductList from './pages/inventory/ProductList';
-import ProductDetails from './pages/inventory/ProductDetails';
-import InventoryLots from './pages/inventory/InventoryLots';
-import POSInterface from './pages/sales/POSInterface';
-import SalesOrders from './pages/sales/SalesOrders';
-import PurchaseOrders from './pages/purchase/PurchaseOrders';
-import SupplierList from './pages/suppliers/SupplierList';
-import CustomerList from './pages/customers/CustomerList';
-import UserList from './pages/users/UserList';
-import Reports from './pages/reports/Reports';
+// Lazy load all page components for better code splitting
+const Login = lazy(() => import('./pages/auth/Login'));
+const Dashboard = lazy(() => import('./pages/Dashboard'));
+const ProductList = lazy(() => import('./pages/inventory/ProductList'));
+const ProductDetails = lazy(() => import('./pages/inventory/ProductDetails'));
+const InventoryLots = lazy(() => import('./pages/inventory/InventoryLots'));
+const POSInterface = lazy(() => import('./pages/sales/POSInterface'));
+const SalesOrders = lazy(() => import('./pages/sales/SalesOrders'));
+const PurchaseOrders = lazy(() => import('./pages/purchase/PurchaseOrders'));
+const SupplierList = lazy(() => import('./pages/suppliers/SupplierList'));
+const CustomerList = lazy(() => import('./pages/customers/CustomerList'));
+const UserList = lazy(() => import('./pages/users/UserList'));
+const Reports = lazy(() => import('./pages/reports/Reports'));
 
 function PrivateRoute({ children }: { children: React.ReactNode }) {
   const { isAuthenticated } = useAuthStore();
@@ -30,7 +32,14 @@ function App() {
       <Routes>
         {/* Auth routes */}
         <Route element={<AuthLayout />}>
-          <Route path="/login" element={<Login />} />
+          <Route
+            path="/login"
+            element={
+              <Suspense fallback={<LoadingSpinner fullScreen message="กำลังโหลดหน้าเข้าสู่ระบบ..." />}>
+                <Login />
+              </Suspense>
+            }
+          />
         </Route>
 
         {/* Protected routes */}
@@ -41,17 +50,94 @@ function App() {
             </PrivateRoute>
           }
         >
-          <Route path="/" element={<Dashboard />} />
-          <Route path="/inventory/products" element={<ProductList />} />
-          <Route path="/inventory/products/:id" element={<ProductDetails />} />
-          <Route path="/inventory/lots" element={<InventoryLots />} />
-          <Route path="/sales/pos" element={<POSInterface />} />
-          <Route path="/sales/orders" element={<SalesOrders />} />
-          <Route path="/purchase/orders" element={<PurchaseOrders />} />
-          <Route path="/purchase/suppliers" element={<SupplierList />} />
-          <Route path="/customers" element={<CustomerList />} />
-          <Route path="/settings/users" element={<UserList />} />
-          <Route path="/reports" element={<Reports />} />
+          <Route
+            path="/"
+            element={
+              <Suspense fallback={<LoadingSpinner message="กำลังโหลดแดชบอร์ด..." />}>
+                <Dashboard />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/inventory/products"
+            element={
+              <Suspense fallback={<LoadingSpinner message="กำลังโหลดรายการสินค้า..." />}>
+                <ProductList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/inventory/products/:id"
+            element={
+              <Suspense fallback={<LoadingSpinner message="กำลังโหลดรายละเอียดสินค้า..." />}>
+                <ProductDetails />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/inventory/lots"
+            element={
+              <Suspense fallback={<LoadingSpinner message="กำลังโหลดข้อมูล Lot..." />}>
+                <InventoryLots />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/sales/pos"
+            element={
+              <Suspense fallback={<LoadingSpinner message="กำลังโหลดจุดขาย..." />}>
+                <POSInterface />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/sales/orders"
+            element={
+              <Suspense fallback={<LoadingSpinner message="กำลังโหลดประวัติการขาย..." />}>
+                <SalesOrders />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/purchase/orders"
+            element={
+              <Suspense fallback={<LoadingSpinner message="กำลังโหลดใบสั่งซื้อ..." />}>
+                <PurchaseOrders />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/purchase/suppliers"
+            element={
+              <Suspense fallback={<LoadingSpinner message="กำลังโหลดรายชื่อซัพพลายเออร์..." />}>
+                <SupplierList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/customers"
+            element={
+              <Suspense fallback={<LoadingSpinner message="กำลังโหลดรายชื่อลูกค้า..." />}>
+                <CustomerList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/settings/users"
+            element={
+              <Suspense fallback={<LoadingSpinner message="กำลังโหลดการจัดการผู้ใช้..." />}>
+                <UserList />
+              </Suspense>
+            }
+          />
+          <Route
+            path="/reports"
+            element={
+              <Suspense fallback={<LoadingSpinner message="กำลังโหลดรายงาน..." />}>
+                <Reports />
+              </Suspense>
+            }
+          />
         </Route>
       </Routes>
     </BrowserRouter>
