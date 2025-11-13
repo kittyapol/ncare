@@ -21,6 +21,7 @@ api.interceptors.request.use(
     }
 
     // Add request start time for performance tracking
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     (config as any).metadata = { startTime: Date.now() };
 
     // Add breadcrumb for API request
@@ -49,6 +50,7 @@ api.interceptors.request.use(
 api.interceptors.response.use(
   (response) => {
     // Track API performance
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const config = response.config as any;
     if (config.metadata?.startTime) {
       const duration = Date.now() - config.metadata.startTime;

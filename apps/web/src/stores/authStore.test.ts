@@ -101,14 +101,14 @@ describe('authStore', () => {
     });
 
     it('should return true when user exists', () => {
-      useAuthStore.getState().login(mockUser, 'token', 'refresh');
+      useAuthStore.getState().login('token', 'refresh', mockUser);
 
       const state = useAuthStore.getState();
       expect(state.isAuthenticated).toBe(true);
     });
 
     it('should return false after logout', () => {
-      useAuthStore.getState().login(mockUser, 'token', 'refresh');
+      useAuthStore.getState().login('token', 'refresh', mockUser);
       useAuthStore.getState().logout();
 
       const state = useAuthStore.getState();

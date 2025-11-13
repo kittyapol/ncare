@@ -17,11 +17,6 @@ export function createTestQueryClient() {
         retry: false,
       },
     },
-    logger: {
-      log: console.log,
-      warn: console.warn,
-      error: () => {}, // Suppress error logs in tests
-    },
   });
 }
 
@@ -67,5 +62,6 @@ export const waitForLoadingToFinish = () =>
   new Promise((resolve) => setTimeout(resolve, 0));
 
 // Re-export everything from React Testing Library
+// eslint-disable-next-line react-refresh/only-export-components
 export * from '@testing-library/react';
 export { default as userEvent } from '@testing-library/user-event';
