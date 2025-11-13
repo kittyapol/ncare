@@ -2,7 +2,7 @@ from datetime import datetime, timedelta
 from typing import Any
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, joinedload
 
 from app.api.v1.endpoints.auth import get_current_user
 from app.core.database import get_db
@@ -27,8 +27,12 @@ def get_inventory_lots(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Any:
-    """Get all inventory lots"""
-    query = db.query(InventoryLot)
+    """Get all inventory lots with product, warehouse, and supplier details"""
+    query = db.query(InventoryLot).options(
+        joinedload(InventoryLot.product),
+        joinedload(InventoryLot.warehouse),
+        joinedload(InventoryLot.supplier),
+    )
 
     if product_id:
         query = query.filter(InventoryLot.product_id == product_id)
@@ -50,11 +54,16 @@ def get_expiring_lots(
     db: Session = Depends(get_db),
     current_user: User = Depends(get_current_user),
 ) -> Any:
-    """Get lots expiring within specified days"""
+    """Get lots expiring within specified days with product details"""
     expiry_threshold = datetime.now().date() + timedelta(days=days)
 
     lots = (
         db.query(InventoryLot)
+        .options(
+            joinedload(InventoryLot.product),
+            joinedload(InventoryLot.warehouse),
+            joinedload(InventoryLot.supplier),
+        )
         .filter(
             InventoryLot.expiry_date <= expiry_threshold,
             InventoryLot.quantity_available > 0,

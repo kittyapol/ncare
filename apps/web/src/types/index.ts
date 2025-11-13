@@ -76,6 +76,16 @@ export interface Product {
   updated_at?: string;
 }
 
+export interface Warehouse {
+  id: string;
+  code: string;
+  name: string;
+  type: 'main' | 'branch' | 'cold_storage' | 'quarantine';
+  address?: string;
+  is_active: boolean;
+  created_at: string;
+}
+
 export interface InventoryLot {
   id: string;
   product_id: string;
@@ -95,6 +105,10 @@ export interface InventoryLot {
   quality_notes?: string;
   created_at: string;
   updated_at?: string;
+  // Nested relationships (when included in response)
+  product?: Product;
+  warehouse?: Warehouse;
+  supplier?: Supplier;
 }
 
 export interface SalesOrder {
