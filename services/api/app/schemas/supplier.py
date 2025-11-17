@@ -2,7 +2,7 @@
 Supplier schemas for request/response validation
 """
 
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -157,8 +157,8 @@ class SupplierResponse(SupplierBase):
 
     id: UUID
     is_active: bool = True
-    created_at: date
-    updated_at: Optional[date] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
 
