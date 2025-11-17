@@ -31,8 +31,7 @@ class SalesOrderItemResponse(BaseModel):
     lot_id: Optional[str] = None
     created_at: datetime
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class SalesOrderCreate(BaseModel):
@@ -78,8 +77,7 @@ class SalesOrderResponse(BaseModel):
     created_at: datetime
     updated_at: Optional[datetime] = None
 
-    class Config:
-        from_attributes = True
+    model_config = {"from_attributes": True}
 
 
 class SalesOrderComplete(BaseModel):

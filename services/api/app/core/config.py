@@ -14,7 +14,7 @@ class Settings(BaseSettings):
     # API
     PROJECT_NAME: str = "Pharmacy ERP System"
     API_V1_PREFIX: str = "/api/v1"
-    DEBUG: bool = True
+    DEBUG: bool = False
     ENVIRONMENT: str = "development"
 
     # Database
@@ -24,7 +24,9 @@ class Settings(BaseSettings):
     REDIS_URL: str = "redis://localhost:6379/0"
 
     # Security
-    SECRET_KEY: str = "your-secret-key-change-in-production"
+    # WARNING: Change SECRET_KEY in production via environment variable!
+    # This default is only for local development and testing
+    SECRET_KEY: str = "dev-secret-key-CHANGE-IN-PRODUCTION-via-environment-variable"
     ALGORITHM: str = "HS256"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 30
     REFRESH_TOKEN_EXPIRE_DAYS: int = 7
