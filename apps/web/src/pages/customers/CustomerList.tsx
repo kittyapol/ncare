@@ -2,6 +2,7 @@ import { useState } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Customer } from '@/types';
 import CustomerForm from '@/components/forms/CustomerForm';
+import CustomerProfileModal from '@/components/modals/CustomerProfileModal';
 import api from '@/services/api';
 import { format } from 'date-fns';
 
@@ -12,6 +13,7 @@ export default function CustomerList() {
   const [searchQuery, setSearchQuery] = useState('');
   const [showCreateForm, setShowCreateForm] = useState(false);
   const [editingCustomer, setEditingCustomer] = useState<Customer | null>(null);
+  const [viewingCustomer, setViewingCustomer] = useState<Customer | null>(null);
   const [currentPage, setCurrentPage] = useState(0);
   const pageSize = 20;
 
@@ -291,11 +293,11 @@ export default function CustomerList() {
                       </td>
                       <td className="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                         <div className="flex justify-end gap-2">
-                          {/* View Sales Orders */}
-                          <a
-                            href={`/sales-orders?customer=${customer.id}`}
-                            className="text-blue-600 hover:text-blue-900"
-                            title="ดูประวัติการซื้อ"
+                          {/* View Profile */}
+                          <button
+                            onClick={() => setViewingCustomer(customer)}
+                            className="text-indigo-600 hover:text-indigo-900"
+                            title="ดูรายละเอียด"
                           >
                             <svg
                               className="w-5 h-5"
@@ -307,15 +309,21 @@ export default function CustomerList() {
                                 strokeLinecap="round"
                                 strokeLinejoin="round"
                                 strokeWidth={2}
-                                d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"
+                                d="M15 12a3 3 0 11-6 0 3 3 0 016 0z"
+                              />
+                              <path
+                                strokeLinecap="round"
+                                strokeLinejoin="round"
+                                strokeWidth={2}
+                                d="M2.458 12C3.732 7.943 7.523 5 12 5c4.478 0 8.268 2.943 9.542 7-1.274 4.057-5.064 7-9.542 7-4.477 0-8.268-2.943-9.542-7z"
                               />
                             </svg>
-                          </a>
+                          </button>
 
                           {/* Edit */}
                           <button
                             onClick={() => setEditingCustomer(customer)}
-                            className="text-indigo-600 hover:text-indigo-900"
+                            className="text-blue-600 hover:text-blue-900"
                             title="แก้ไข"
                           >
                             <svg
@@ -389,6 +397,19 @@ export default function CustomerList() {
           </>
         )}
       </div>
+
+      {/* Customer Profile Modal */}
+      {viewingCustomer && (
+        <CustomerProfileModal
+          isOpen={!!viewingCustomer}
+          onClose={() => setViewingCustomer(null)}
+          customer={viewingCustomer}
+          onEdit={() => {
+            setEditingCustomer(viewingCustomer);
+            setViewingCustomer(null);
+          }}
+        />
+      )}
 
       {/* Summary Stats */}
       {data?.items && data.items.length > 0 && (

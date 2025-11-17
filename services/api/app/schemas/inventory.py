@@ -4,6 +4,9 @@ from typing import List, Optional
 
 from pydantic import BaseModel
 
+from app.schemas.product import ProductResponse
+from app.schemas.supplier import SupplierResponse
+
 
 class QualityStatus(str, Enum):
     PASSED = "passed"
@@ -65,6 +68,10 @@ class InventoryLotResponse(InventoryLotBase):
     id: str
     created_at: datetime
     updated_at: Optional[datetime] = None
+    # Nested relationships
+    product: Optional[ProductResponse] = None
+    warehouse: Optional[WarehouseResponse] = None
+    supplier: Optional[SupplierResponse] = None
 
     class Config:
         from_attributes = True

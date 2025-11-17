@@ -1,9 +1,9 @@
 import { useForm } from 'react-hook-form';
 import { zodResolver } from '@hookform/resolvers/zod';
 import { z } from 'zod';
-import { useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import api from '@/services/api';
-import { Product } from '@/types';
+import { Product, Category } from '@/types';
 
 // Zod Validation Schema
 const productSchema = z.object({
@@ -71,6 +71,17 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
 
   // Watch VAT applicable to show/hide VAT fields
   const isVatApplicable = watch('is_vat_applicable');
+
+  // Fetch categories
+  const { data: categoriesData, isLoading: categoriesLoading } = useQuery({
+    queryKey: ['categories'],
+    queryFn: async () => {
+      const response = await api.get('/inventory/categories/');
+      return response.data;
+    },
+  });
+
+  const categories: Category[] = categoriesData?.items || [];
 
   // Create Product Mutation
   const createMutation = useMutation({
@@ -168,6 +179,25 @@ export default function ProductForm({ product, onSuccess, onCancel }: ProductFor
           <div>
             <label className="block text-sm font-medium mb-1">Manufacturer</label>
             <input {...register('manufacturer')} className="input" placeholder="ABC Pharma" />
+          </div>
+
+          {/* Category */}
+          <div>
+            <label className="block text-sm font-medium mb-1">Category</label>
+            <select {...register('category_id')} className="input" disabled={categoriesLoading}>
+              <option value="">-- Select Category --</option>
+              {categoriesLoading ? (
+                <option value="">Loading categories...</option>
+              ) : (
+                categories.map((category) => (
+                  <option key={category.id} value={category.id}>
+                    {category.parent_id ? '  ↳ ' : ''}{category.name_th}
+                    {category.name_en ? ` (${category.name_en})` : ''}
+                  </option>
+                ))
+              )}
+            </select>
+            {errors.category_id && <p className="text-red-500 text-sm mt-1">{errors.category_id.message}</p>}
           </div>
 
           {/* Description */}
