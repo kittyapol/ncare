@@ -2,7 +2,7 @@
 Category schemas for request/response validation
 """
 
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -16,7 +16,9 @@ class CategoryBase(BaseModel):
     name_th: str = Field(..., min_length=1, max_length=255, description="Thai category name")
     name_en: Optional[str] = Field(None, max_length=255, description="English category name")
     description: Optional[str] = Field(None, description="Category description")
-    parent_id: Optional[UUID] = Field(None, description="Parent category ID for hierarchical structure")
+    parent_id: Optional[UUID] = Field(
+        None, description="Parent category ID for hierarchical structure"
+    )
 
     @field_validator("code")
     @classmethod
@@ -24,7 +26,9 @@ class CategoryBase(BaseModel):
         """Validate that code contains only alphanumeric characters, hyphens, and dots"""
         allowed_chars = v.replace("-", "").replace("_", "").replace(".", "")
         if not allowed_chars.isalnum():
-            raise ValueError("Code must contain only alphanumeric characters, hyphens, underscores, or dots")
+            raise ValueError(
+                "Code must contain only alphanumeric characters, hyphens, underscores, or dots"
+            )
         return v.upper()
 
 
@@ -51,7 +55,9 @@ class CategoryUpdate(BaseModel):
         if v is not None:
             allowed_chars = v.replace("-", "").replace("_", "").replace(".", "")
             if not allowed_chars.isalnum():
-                raise ValueError("Code must contain only alphanumeric characters, hyphens, underscores, or dots")
+                raise ValueError(
+                    "Code must contain only alphanumeric characters, hyphens, underscores, or dots"
+                )
             return v.upper()
         return v
 
@@ -61,7 +67,7 @@ class CategoryResponse(CategoryBase):
 
     id: UUID
     is_active: bool = True
-    created_at: date
+    created_at: datetime
 
     # Optional: include children count
     # children_count: Optional[int] = None

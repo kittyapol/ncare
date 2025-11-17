@@ -32,7 +32,9 @@ class SupplierBase(BaseModel):
     country: str = Field(default="Thailand", max_length=100, description="Country")
 
     # Business terms
-    payment_terms: Optional[str] = Field(None, max_length=100, description="Payment terms (e.g., Net 30)")
+    payment_terms: Optional[str] = Field(
+        None, max_length=100, description="Payment terms (e.g., Net 30)"
+    )
     credit_limit: Optional[str] = Field(None, max_length=100, description="Credit limit")
     discount_terms: Optional[str] = Field(None, max_length=100, description="Discount terms")
 
@@ -47,7 +49,9 @@ class SupplierBase(BaseModel):
     def code_must_be_alphanumeric(cls, v: str) -> str:
         """Validate that code contains only alphanumeric characters and hyphens"""
         if not v.replace("-", "").replace("_", "").isalnum():
-            raise ValueError("Code must contain only alphanumeric characters, hyphens, or underscores")
+            raise ValueError(
+                "Code must contain only alphanumeric characters, hyphens, or underscores"
+            )
         return v.upper()
 
     @field_validator("tax_id")
@@ -122,7 +126,9 @@ class SupplierUpdate(BaseModel):
     def code_must_be_alphanumeric(cls, v: Optional[str]) -> Optional[str]:
         """Validate that code contains only alphanumeric characters and hyphens"""
         if v is not None and not v.replace("-", "").replace("_", "").isalnum():
-            raise ValueError("Code must contain only alphanumeric characters, hyphens, or underscores")
+            raise ValueError(
+                "Code must contain only alphanumeric characters, hyphens, or underscores"
+            )
         return v.upper() if v else v
 
     @field_validator("tax_id")

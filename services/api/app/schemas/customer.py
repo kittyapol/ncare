@@ -2,7 +2,7 @@
 Customer schemas for request/response validation
 """
 
-from datetime import date
+from datetime import date, datetime
 from typing import Optional
 from uuid import UUID
 
@@ -30,7 +30,9 @@ class CustomerBase(BaseModel):
     postal_code: Optional[str] = Field(None, max_length=10, description="Postal code")
 
     # Loyalty program
-    membership_tier: Optional[str] = Field(None, max_length=50, description="Membership tier (Bronze/Silver/Gold/Platinum)")
+    membership_tier: Optional[str] = Field(
+        None, max_length=50, description="Membership tier (Bronze/Silver/Gold/Platinum)"
+    )
 
     # Medical info
     allergies: Optional[str] = Field(None, description="Known allergies")
@@ -44,7 +46,9 @@ class CustomerBase(BaseModel):
     def code_must_be_alphanumeric(cls, v: str) -> str:
         """Validate that code contains only alphanumeric characters and hyphens"""
         if not v.replace("-", "").replace("_", "").isalnum():
-            raise ValueError("Code must contain only alphanumeric characters, hyphens, or underscores")
+            raise ValueError(
+                "Code must contain only alphanumeric characters, hyphens, or underscores"
+            )
         return v.upper()
 
     @field_validator("gender")
@@ -112,7 +116,9 @@ class CustomerUpdate(BaseModel):
     def code_must_be_alphanumeric(cls, v: Optional[str]) -> Optional[str]:
         """Validate that code contains only alphanumeric characters and hyphens"""
         if v is not None and not v.replace("-", "").replace("_", "").isalnum():
-            raise ValueError("Code must contain only alphanumeric characters, hyphens, or underscores")
+            raise ValueError(
+                "Code must contain only alphanumeric characters, hyphens, or underscores"
+            )
         return v.upper() if v else v
 
     @field_validator("gender")
@@ -134,8 +140,8 @@ class CustomerResponse(CustomerBase):
     loyalty_points: int = 0
     member_since: Optional[date] = None
     is_active: bool = True
-    created_at: date
-    updated_at: Optional[date] = None
+    created_at: datetime
+    updated_at: Optional[datetime] = None
 
     model_config = {"from_attributes": True}
 
